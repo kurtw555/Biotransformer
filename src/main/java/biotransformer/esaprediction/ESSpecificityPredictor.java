@@ -15,13 +15,13 @@ import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.smarts.SmartsPattern;
 import ambit2.smarts.query.SMARTSException;
 import biotransformer.biomolecule.Enzyme;
-//import biotransformer.biomolecule.Enzyme.EnzymeName;
+import biotransformer.esaprediction.ESSpecificityPredictor;
 import biotransformer.biosystems.BioSystem;
 import biotransformer.transformation.MetabolicReaction;
 import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.ChemicalClassFinder.ChemicalClassName;
-import reactantpredictor.BioTransformerAPIs;
+import reactantpredictor.ReactantPred.*;
 
 /**
  * Predicts whether a compound is a substrate of a given enzyme within a specific biosystem.
