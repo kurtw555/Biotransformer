@@ -38,7 +38,7 @@ import biotransformer.utils.ChemStructureManipulator;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.Utilities;
 import exception.BioTransformerException;
-import phase2filter.prediction.P2Filter;
+import phase2filter.prediction.P2Filter;;
 
 /**
  * @author Yannick Djoumbou Feunang

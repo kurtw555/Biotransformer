@@ -16,10 +16,14 @@ import java.util.HashMap;
 import java.util.LinkedHashMap;
 
 import org.apache.commons.io.FilenameUtils;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.JsonParser.Feature;
-import org.codehaus.jackson.map.JsonMappingException;
-import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.core.JsonParseException;
+//import org.codehaus.jackson.JsonParseException;
+//import org.codehaus.jackson.JsonParser.Feature;
+import com.fasterxml.jackson.core.JsonParser.Feature;
+//import org.codehaus.jackson.map.JsonMappingException;
+import com.fasterxml.jackson.databind.JsonMappingException;
+//import org.codehaus.jackson.map.ObjectMapper;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 
 import ambit2.smarts.SMIRKSManager;

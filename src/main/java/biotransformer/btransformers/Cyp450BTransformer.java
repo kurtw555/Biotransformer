@@ -22,7 +22,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-//import bioTransformerAPI.BioTransformerAPI;
+import bioTransformerAPI.BioTransformerAPI;
 import biotransformer.biomolecule.Enzyme;
 import biotransformer.biosystems.BioSystem.BioSystemName;
 import biotransformer.btransformers.Biotransformer;
@@ -31,9 +31,9 @@ import biotransformer.transformation.MetabolicReaction;
 import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.FileUtilities;
 import biotransformer.utils.Utilities;
-//import cyProduct.cyProductMain;
+import cyProduct.cyProductMain;
 import exception.BioTransformerException;
-//import reactantpredictor.BioTransformerAPIs;
+import reactantpredictor.BioTransformerAPIs;
 
 
 public class Cyp450BTransformer extends Biotransformer {
