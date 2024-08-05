@@ -137,7 +137,6 @@
                 </resource>
                 -->
         </resources>
-
         <plugins>
 
             <!-- Set a compiler level -->
