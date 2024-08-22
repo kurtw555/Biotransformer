@@ -20,10 +20,10 @@ import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 import org.apache.commons.lang3.StringUtils;
-import com.fasterxml.jackson.core.JsonParseException;
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.databind.JsonMappingException;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.codehaus.jackson.JsonParseException;
+import org.codehaus.jackson.map.JsonMappingException;
+import org.codehaus.jackson.map.ObjectMapper;
+import org.codehaus.jackson.JsonParser.Feature;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -80,8 +80,9 @@ public class Biotransformer {
 	protected MReactionsFilter mRFilter;
 	protected LinkedHashMap<String, Double> reactionORatios;
 	protected IChemObjectBuilder 	builder = SilentChemObjectBuilder.getInstance();
-	public SmilesGenerator smiGen 		= new SmilesGenerator().isomeric(); 
-	
+	//public SmilesGenerator smiGen 		= new SmilesGenerator().isomeric();
+	public SmilesGenerator smiGen 		= SmilesGenerator.isomeric();
+
 	protected SmilesParser	smiParser		= new SmilesParser(builder);
 	public InChIGeneratorFactory inchiGenFactory;
 	public LinkedHashMap<String, ArrayList<MetabolicReaction>>	reactionsByGroups 
@@ -119,7 +120,9 @@ public class Biotransformer {
 	}
 	
 	private void setReactionsGroups() throws JsonParseException, JsonMappingException, FileNotFoundException, IOException{
-		reactionsByGroups.put("standardizationReactions", MReactionSets.standardizationReactions);
+		MReactionSets mrs = new MReactionSets();
+		//reactionsByGroups.put("standardizationReactions", MReactionSets.standardizationReactions);
+		reactionsByGroups.put("standardizationReactions", mrs.standardizationReactions);
 		MReactionSets msets = new MReactionSets();
 		for(MetabolicReaction mr : msets.standardizationReactions) {
 			this.reactionsHash.put(mr.name, mr);
@@ -1796,6 +1799,17 @@ public class Biotransformer {
 //			mole.setProperties(uniqueSetOfProducts.getAtomContainer(i).getProperties());
 //			resultSet.addAtomContainer(mole);
 //		}
+		for(int i = 0; i < uniqueSetOfProducts.getAtomContainerCount(); i++){
+			int countAtom_nonH = 0;
+			IAtomContainer oneMole = uniqueSetOfProducts.getAtomContainer(i);
+			for(int t = 0; t < oneMole.getAtomCount(); t++){
+				if(!oneMole.getAtom(t).getSymbol().equals("H")) countAtom_nonH++;
+			}
+			if(countAtom_nonH < 5){
+				uniqueSetOfProducts.removeAtomContainer(i);
+				i = i-1;
+			}
+		}
 		SDFWriter sdfWriter = new SDFWriter(new FileOutputStream(outputFileName));		
 		sdfWriter.write(uniqueSetOfProducts);
 		//sdfWriter.write(resultSet);

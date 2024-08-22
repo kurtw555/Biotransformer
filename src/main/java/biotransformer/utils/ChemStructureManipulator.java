@@ -120,7 +120,9 @@ public class ChemStructureManipulator {
 		}
 		
 		ArrayList<MetabolicReaction> matchedReactions = new ArrayList<MetabolicReaction>();
-		for(MetabolicReaction mr : MReactionSets.standardizationReactions){
+		MReactionSets mrs = new MReactionSets();
+		//for(MetabolicReaction mr : MReactionSets.standardizationReactions){
+		for(MetabolicReaction mr : mrs.standardizationReactions){
 			if(ChemStructureExplorer.compoundMatchesReactionConstraints(mr, molClone)){
 				matchedReactions.add(mr);
 			}

@@ -23,8 +23,8 @@ import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 import org.apache.commons.lang3.StringUtils;
-import com.fasterxml.jackson.core.JsonParser.Feature;
-import com.fasterxml.jackson.databind.ObjectMapper;
+import org.codehaus.jackson.JsonParser.Feature;
+import org.codehaus.jackson.map.ObjectMapper;
 import org.json.simple.JSONValue;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;

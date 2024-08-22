@@ -19,11 +19,13 @@ import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
+import org.openscience.cdk.smiles.SmiFlavor;
+import org.openscience.cdk.smiles.SmilesGenerator;
 
 import biotransformer.transformation.Biotransformation;
 
 public class Utilities {
-
+	public static SmilesGenerator sg = new SmilesGenerator(SmiFlavor.Canonical);
 	public Utilities() {
 		// TODO Auto-generated constructor stub
 	
@@ -162,5 +164,33 @@ public class Utilities {
 			}
 			
 		}
+
+	/**
+	 * Added by Siyang. To select unique metabolites
+	 * @param biotransformations
+	 * @return
+	 */
+	public static ArrayList<Biotransformation> selectUniqueMetabolites(ArrayList<Biotransformation> biotransformations) throws Exception{
+		ArrayList<Biotransformation> unique_bts = new ArrayList<>();
+		ArrayList<String> stored_SMILES = new ArrayList<>();
+		for(int i = 0; i < biotransformations.size(); i++){
+			boolean isDuplicate= false;
+			IAtomContainerSet metabolites = biotransformations.get(i).getProducts();
+			for(int j = 0; j < metabolites.getAtomContainerCount(); j++){
+				IAtomContainer oneMetabolite = metabolites.getAtomContainer(j);
+				String smile = sg.create(oneMetabolite);
+				if(!stored_SMILES.contains(smile)){
+					stored_SMILES.add(smile);
+				}
+				else{
+					isDuplicate = true;
+					break;
+				}
+			}
+			if(isDuplicate) continue;
+			else unique_bts.add(biotransformations.get(i));
+		}
+		return unique_bts;
+	}
 
 }
