@@ -39,7 +39,7 @@ import biotransformerapicyproduct.BioTransformerAPI_cyproduct;
 public class Cyp450BTransformer extends Biotransformer {
 	//public final String[] cyp450Enzymes =  {"CYP1A2", "CYP2A6", "CYP2B6", "CYP2C8", "CYP2C9", "CYP2C19", "CYP2D6", "CYP2E1", "CYP3A4"};
 	public final String[] cyp450Enzymes =  {"1A2", "2A6", "2B6", "2C8", "2C9", "2C19", "2D6", "2E1", "3A4"};
-	BioTransformerAPI biotransformerAPI = new BioTransformerAPI();
+	//BioTransformerAPI biotransformerAPI = new BioTransformerAPI();
 	
 	public Cyp450BTransformer(BioSystemName bioSName) throws JsonParseException, JsonMappingException, 
 	FileNotFoundException, IOException, BioTransformerException, CDKException {
@@ -111,7 +111,7 @@ public class Cyp450BTransformer extends Biotransformer {
 	 */
 	public ArrayList<Biotransformation> predictCyp450BiotransformationsByMode(IAtomContainer substrate, int mode, boolean preprocess, boolean filter, double threshold)  throws Exception{
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-		BioTransformerAPI cypReact = new BioTransformerAPI();
+		//BioTransformerAPI cypReact = new BioTransformerAPI();
 		//KW
 		//ArrayList<Integer> substrateForEnzymes = cypReact.predictReactantForEnzymes(substrate, this.cyp450Enzymes);
 		//if(substrateForEnzymes.isEmpty()){
