@@ -21,14 +21,13 @@ import biotransformer.utils.HumanMetabolismBiotransformerFunctions;
 import biotransformer.utils.HumanMetabolismHelpingFunctions;
 import biotransformer.utils.Utilities;
 import biotransformer.validateModels.MultivariateDistribution;
-//import reactantpredictor.BioTransfor
-import biotransformerapi.BioTransformerAPI;
+import reactantpredictor.BioTransformerAPIs;
 
 public class SimulateHumanMetabolism {
 	HumanMetabolismHelpingFunctions hm_helper = new HumanMetabolismHelpingFunctions();
 	HumanMetabolismBiotransformerFunctions hm_transform = new HumanMetabolismBiotransformerFunctions();
 	Double scoreThreshold = 0.0;
-	//BioTransformerAPIs reactantPred = new BioTransformerAPIs();
+	BioTransformerAPIs reactantPred = new BioTransformerAPIs();	
 	MultivariateDistribution mnd;
 	
 	protected LinkedHashMap<String, MetabolicReaction> combinedReactionsHash = new LinkedHashMap<String, MetabolicReaction>();
@@ -105,7 +104,6 @@ public class SimulateHumanMetabolism {
 				if(!subStrateProcessed.contains(subStrate_inChiKey)){
 					subStrateProcessed.add(subStrate_inChiKey);
 					try{
-						BioTransformerAPI reactantPred = new BioTransformerAPI();
 						boolean validCyp450 = reactantPred.predictReactant(nextSubstrates.getAtomContainer(j), ESSpecificityPredictor.cyp450EnzymeList);
 						if(!validCyp450) continue;
 					}catch (Exception e){

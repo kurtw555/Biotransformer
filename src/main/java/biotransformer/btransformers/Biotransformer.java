@@ -80,9 +80,8 @@ public class Biotransformer {
 	protected MReactionsFilter mRFilter;
 	protected LinkedHashMap<String, Double> reactionORatios;
 	protected IChemObjectBuilder 	builder = SilentChemObjectBuilder.getInstance();
-	//public SmilesGenerator smiGen 		= new SmilesGenerator().isomeric();
-	public SmilesGenerator smiGen 		= SmilesGenerator.isomeric();
-
+	public SmilesGenerator smiGen 		= new SmilesGenerator().isomeric(); 
+	
 	protected SmilesParser	smiParser		= new SmilesParser(builder);
 	public InChIGeneratorFactory inchiGenFactory;
 	public LinkedHashMap<String, ArrayList<MetabolicReaction>>	reactionsByGroups 

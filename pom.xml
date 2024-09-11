@@ -36,25 +36,15 @@
   		<artifactId>cdk-bundle</artifactId>
   		<version>2.10-SNAPSHOT</version>
   	</dependency>
-    <dependency>
-        <groupId>ambit</groupId>
-        <artifactId>ambit2-smarts</artifactId>
-        <!--	<version>${project.version}</version> -->
-        <version>1.0</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/lib/ambit2-smarts.jar</systemPath>
-    </dependency>
-<!--
   	<dependency>
   		<groupId>ambit</groupId>
   		<artifactId>ambit2-smarts</artifactId>
   		<version>4.0.0-SNAPSHOT</version>
   	</dependency>
-  -->
   	<dependency>
   		<groupId>junit</groupId>
   		<artifactId>junit</artifactId>
-  		<version>4.12</version>
+  		<version>4.13.2</version>
   	</dependency>
   	<dependency>
   		<groupId>org.kie.modules</groupId>
@@ -77,38 +67,28 @@
   		<artifactId>commons-cli</artifactId>
   		<version>1.4</version>
   	</dependency>
-      <!-- https://mvnrepository.com/artifact/com.konghq/unirest-java -->
-      <dependency>
-          <groupId>com.konghq</groupId>
-          <artifactId>unirest-java</artifactId>
-          <version>3.14.5</version>
-      </dependency>
-
-      <!--
-        <dependency>
-            <groupId>com.mashape.unirest</groupId>
-            <artifactId>unirest-java</artifactId>
-            <version>1.4.9</version>
-        </dependency>
-        -->
+    <dependency>
+        <groupId>com.konghq</groupId>
+        <artifactId>unirest-java</artifactId>
+        <version>3.14.5</version>
+    </dependency>
   	<dependency>
   		<groupId>nz.ac.waikato.cms.weka</groupId>
   		<artifactId>weka-stable</artifactId>
   		<version>3.8.1</version>
   	</dependency>
-      <!-- https://mvnrepository.com/artifact/com.fasterxml.jackson.jaxrs/jackson-jaxrs-json-provider -->
-      <dependency>
-          <groupId>com.fasterxml.jackson.jaxrs</groupId>
-          <artifactId>jackson-jaxrs-json-provider</artifactId>
-          <version>2.17.2</version>
-      </dependency>
-    <!--
+    <dependency>
+        <groupId>com.fasterxml.jackson.jr</groupId>
+        <artifactId>jackson-jr-all</artifactId>
+        <version>2.8.7</version>
+    </dependency>
+<!--
   	<dependency>
-  		<groupId>org.codehaus.jackson</groupId>
-  		<artifactId>jackson-jaxrs</artifactId>
-  		<version>1.9.13</version>
-  	</dependency>
-  	-->
+        <groupId>djoumbou</groupId>
+        <artifactId>phase2filter</artifactId>
+        <version>1.0.2</version>
+    </dependency>
+-->
     <dependency>
         <groupId>djoumbou</groupId>
         <artifactId>phase2filter</artifactId>
@@ -116,50 +96,40 @@
         <scope>system</scope>
         <systemPath>${project.basedir}/lib/phase2filter-1.0.2.jar</systemPath>
     </dependency>
-
-<!--
-  	<dependency>
-        <groupId>djoumbou</groupId>
-        <artifactId>phase2filter</artifactId>
-        <version>1.0.2</version>
-    </dependency>
--->
-<!--
-  	<dependency>
-        <groupId>wishartlab</groupId>
-        <artifactId>CypReact</artifactId>
-        <version>1.0.0-SNAPSHOT</version>
-    </dependency>
--->
-    <dependency>
-        <groupId>wishartlab</groupId>
-        <artifactId>CypReact</artifactId>
-        <version>1.0</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/lib/CypReact.jar</systemPath>
-    </dependency>
-    <dependency>
-        <groupId>wishartlab</groupId>
-        <artifactId>CyProduct</artifactId>
-        <version>1.0</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/lib/CyProduct.jar</systemPath>
-    </dependency>
-
-    <dependency>
-        <groupId>predictor</groupId>
-        <artifactId>logDPredictor</artifactId>
-        <version>1.0</version>
-        <scope>system</scope>
-        <systemPath>${project.basedir}/lib/logDPredictor.jar</systemPath>
-    </dependency>
-
+      <!--
+          <dependency>
+            <groupId>wishartlab</groupId>
+            <artifactId>CypReact</artifactId>
+            <version>1.0.0-SNAPSHOT</version>
+        </dependency>
+      -->
+      <dependency>
+          <groupId>wishartlab</groupId>
+          <artifactId>CypReact</artifactId>
+          <version>1.0</version>
+          <scope>system</scope>
+          <systemPath>${project.basedir}/lib/CypReact.jar</systemPath>
+      </dependency>
  <!--  	<dependency>
         <groupId>wishartlab</groupId>
         <artifactId>CyProduct</artifactId>
         <version>1.0.0-SNAPSHOT</version>
     </dependency>
  -->
+      <dependency>
+          <groupId>wishartlab</groupId>
+          <artifactId>CyProduct</artifactId>
+          <version>1.0</version>
+          <scope>system</scope>
+          <systemPath>${project.basedir}/lib/CyProduct.jar</systemPath>
+      </dependency>
+      <dependency>
+          <groupId>predictor</groupId>
+          <artifactId>logDPredictor</artifactId>
+          <version>1.0</version>
+          <scope>system</scope>
+          <systemPath>${project.basedir}/lib/logDPredictor.jar</systemPath>
+      </dependency>
     <dependency>
 		<groupId>com.opencsv</groupId>
 		<artifactId>opencsv</artifactId>
