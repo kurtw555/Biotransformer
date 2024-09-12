@@ -18,8 +18,12 @@ import org.openscience.cdk.interfaces.IChemObjectBuilder;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
 import org.openscience.cdk.smiles.SmilesParser;
 
-import com.opencsv.CSVReader;
-import com.opencsv.CSVWriter;
+//import com.opencsv.CSVReader;
+//import com.opencsv.CSVWriter;
+import java.io.Reader;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVRecord;
+import org.apache.commons.csv.CSVPrinter;
 
 import biotransformer.btransformers.SimulateHumanMetabolism;
 import biotransformer.utils.HumanSuperBioTransformer;
@@ -58,15 +62,29 @@ public class BiotransformerMultiThread {
         ExecutorService executor = Executors.newFixedThreadPool(numberCore);
         int current_file_index = Integer.valueOf(inputfileName.split("_")[1].replace(".csv",""));
 
-        CSVReader csvReader = new CSVReader(new FileReader(String.format("%s/%s/%s", current_dir,"inputFolder",inputfileName)));
-        CSVWriter StatusWriter = new CSVWriter(new FileWriter(String.format("%s/%s_%d.csv", current_dir,"inputFolder/BioTransformerExeption",current_file_index)));
+        String inputFile = String.format("%s/%s/%s", current_dir,"inputFolder",inputfileName);
+        String outputFile = String.format("%s/%s_%d.csv", current_dir,"inputFolder/BioTransformerExeption",current_file_index);
+        Reader csvReader = new FileReader(inputFile);
+        Iterable<CSVRecord> records = CSVFormat.EXCEL.parse(csvReader);
+
+        CSVPrinter csvFilePrinter = null;
+        CSVFormat csvFileFormat = CSVFormat.EXCEL.withHeader();
+        FileWriter fileWriter = new FileWriter(outputFile);
+        CSVPrinter StatusWriter = new CSVPrinter(fileWriter, csvFileFormat);
+
+        //CSVReader csvReader = new CSVReader(new FileReader(String.format("%s/%s/%s", current_dir,"inputFolder",inputfileName)));
+        //CSVWriter StatusWriter = new CSVWriter(new FileWriter(String.format("%s/%s_%d.csv", current_dir,"inputFolder/BioTransformerExeption",current_file_index)));
         String[] nextLine;
         // csvReader.readNext(); // skip header
         int cyp450mode = 3;//We chose mode 3: both cyProduct and original biotransformer as default value
-        while ((nextLine = csvReader.readNext()) != null) {
-            if (nextLine != null) {
-                String molID = nextLine[0];
-                String structure = nextLine[2];
+        //while ((nextLine = csvReader.readNext()) != null) {
+        for (CSVRecord record : records) {
+
+            if (record != null) {
+                //String molID = nextLine[0];
+                String molID = record.get(0);
+                //String structure = nextLine[2];
+                String structure = record.get(2);
                 String smiles = structure;
 
                 String fileName = String.format("%s/temp_moloutput/molouput_%s.sdf", current_dir,molID);
@@ -93,22 +111,22 @@ public class BiotransformerMultiThread {
             	//if(f.isDone()){
             		boolean result = maps.get(key).get(exception_time, TimeUnit.SECONDS);
             		if(!result) { 
-            			StatusWriter.writeNext(new String[] {key,"ProgramException"});
+            			StatusWriter.printRecord(new String[] {key,"ProgramException"});
             			}
             	//}
 
             }catch (TimeoutException e) {
                 maps.get(key).cancel(true);
-                StatusWriter.writeNext(new String[] {key,"TimeoutException"});
+                StatusWriter.printRecord(new String[] {key,"TimeoutException"});
 
             }catch (InterruptedException e) {
-                StatusWriter.writeNext(new String[] {key,"InterruptedException"});
+                StatusWriter.printRecord(new String[] {key,"InterruptedException"});
             } catch (ExecutionException e) {
                 e.printStackTrace();
-                StatusWriter.writeNext(new String[] {key,"ExecutionException"});
+                StatusWriter.printRecord(new String[] {key,"ExecutionException"});
             }catch (Exception e) {
                 e.printStackTrace();
-                StatusWriter.writeNext(new String[] {key,"Exception"});
+                StatusWriter.printRecord(new String[] {key,"Exception"});
             }
         }
 

@@ -130,11 +130,18 @@
           <scope>system</scope>
           <systemPath>${project.basedir}/lib/logDPredictor.jar</systemPath>
       </dependency>
+      <dependency>
+          <groupId>org.apache.commons</groupId>
+          <artifactId>commons-csv</artifactId>
+          <version>1.11.0</version>
+      </dependency>
+  <!--
     <dependency>
 		<groupId>com.opencsv</groupId>
 		<artifactId>opencsv</artifactId>
 		<version>5.9</version>
 	</dependency>
+  -->
   </dependencies>
     <build>
     <resources>
