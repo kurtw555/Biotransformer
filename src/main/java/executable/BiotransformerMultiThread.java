@@ -94,9 +94,9 @@ public class BiotransformerMultiThread {
                 System.out.println(smiles);
                 System.out.println(inchiFa.getInChIGenerator(singleInput).getInchiKey());
                 InChIGeneratorFactory inchiFactory = InChIGeneratorFactory.getInstance();
-            	String inChikey = inchiFactory.getInChIGenerator(singleInput).getInchiKey();
-            	System.out.println(inChikey);
-                
+                String inChikey = inchiFactory.getInChIGenerator(singleInput).getInchiKey();
+                System.out.println(inChikey);
+
                 Future<Boolean> future = executor.submit(new CallableSimulateHuman(singleInput,fileName, cyp450mode));
                 maps.put(molID, future);
             }
@@ -107,13 +107,13 @@ public class BiotransformerMultiThread {
         for(String key : maps.keySet()) {
             try {
                 // https://docs.oracle.com/javase/6/docs/api/java/util/concurrent/Future.html#get%28long,%20java.util.concurrent.TimeUnit%29
-            	//Future<Boolean> f = maps.get(key);
-            	//if(f.isDone()){
-            		boolean result = maps.get(key).get(exception_time, TimeUnit.SECONDS);
-            		if(!result) { 
-            			StatusWriter.printRecord(new String[] {key,"ProgramException"});
-            			}
-            	//}
+                //Future<Boolean> f = maps.get(key);
+                //if(f.isDone()){
+                boolean result = maps.get(key).get(exception_time, TimeUnit.SECONDS);
+                if(!result) {
+                    StatusWriter.printRecord(new String[] {key,"ProgramException"});
+                }
+                //}
 
             }catch (TimeoutException e) {
                 maps.get(key).cancel(true);
@@ -155,23 +155,23 @@ public class BiotransformerMultiThread {
 
         public Boolean call() throws Exception{
             try {
-            	String thread = Thread.currentThread().getName();  
-            	System.out.println("Thread: " + thread + " is running");
-            	//HumanSuperBioTransformer hsbt = new HumanSuperBioTransformer();
+                String thread = Thread.currentThread().getName();
+                System.out.println("Thread: " + thread + " is running");
+                //HumanSuperBioTransformer hsbt = new HumanSuperBioTransformer();
                 //hsbt.simulateAllHumanMetabolismAndSavetoSDF(this.mole, this.fileName, 0.5, false, this.modeNumber);
                 SimulateHumanMetabolism shm = new SimulateHumanMetabolism(this.modeNumber);
                 shm.simulateHumanMetabolismAndSaveToSDF(this.mole, this.fileName, false);
-            	return true;
+                return true;
             }
             catch(Exception e) {
-            	e.printStackTrace();
+                e.printStackTrace();
                 return false;
             }
 
         }
     }
-    
-    
+
+
     /**
      * Callable for AllHuman mode
      */
