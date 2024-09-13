@@ -1,0 +1,1 @@
+java -jar biotransformer.jar -k pred -b cyp450 -ismi OC1=CC=CC=C1 -ocsv "test.csv" -nsteps 1
