@@ -139,6 +139,15 @@
           <scope>system</scope>
           <systemPath>${project.basedir}/lib/logDPredictor.jar</systemPath>
       </dependency>
+  <!--
+      <dependency>
+          <groupId>biotransformer-apis</groupId>
+          <artifactId>biotransformer-apis</artifactId>
+          <version>1.0</version>
+          <scope>system</scope>
+          <systemPath>${project.basedir}/lib/biotransformer-apis.jar</systemPath>
+      </dependency>
+  -->
       <dependency>
           <groupId>org.apache.commons</groupId>
           <artifactId>commons-csv</artifactId>

@@ -21,7 +21,8 @@ import biotransformer.transformation.MetabolicReaction;
 import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.ChemicalClassFinder.ChemicalClassName;
-import reactantpredictor.BioTransformerAPIs;
+//import reactantpredictor.BioTransformerAPIs;
+import biotransformerapi.BioTransformerAPI;
 
 /**
  * Predicts whether a compound is a substrate of a given enzyme within a specific biosystem.
@@ -83,7 +84,7 @@ public class ESSpecificityPredictor {
 					chemClasses.contains(ChemicalClassName.SPHINGOLIPID))) {
 				
 				if(this.bSys.name.toString() == "HUMAN"){
-					BioTransformerAPIs reactantPred = new BioTransformerAPIs();
+					BioTransformerAPI reactantPred = new BioTransformerAPI();
 					validCyp450 = reactantPred.predictReactant(substrate, cyp450EnzymeList);
 				}
 			}

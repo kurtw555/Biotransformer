@@ -22,7 +22,7 @@ import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 
-import bioTransformerAPI.BioTransformerAPI;
+import biotransformerapi.BioTransformerAPI;
 import biotransformer.biomolecule.Enzyme;
 import biotransformer.biosystems.BioSystem.BioSystemName;
 import biotransformer.btransformers.Biotransformer;
@@ -33,13 +33,17 @@ import biotransformer.utils.FileUtilities;
 import biotransformer.utils.Utilities;
 import cyProduct.cyProductMain;
 import exception.BioTransformerException;
-import reactantpredictor.BioTransformerAPIs;
+import biotransformerapicyproduct.BioTransformerAPI_cyproduct;
+import cyProduct.predictionhelpers.PredictionFunctions;
+import cyProduct.predictionhelpers.PredictorForAllThreeBoMs;
+
+//import reactantpredictor.biotransformerapis;
 
 
 public class Cyp450BTransformer extends Biotransformer {
 	//public final String[] cyp450Enzymes =  {"CYP1A2", "CYP2A6", "CYP2B6", "CYP2C8", "CYP2C9", "CYP2C19", "CYP2D6", "CYP2E1", "CYP3A4"};
 	public final String[] cyp450Enzymes =  {"1A2", "2A6", "2B6", "2C8", "2C9", "2C19", "2D6", "2E1", "3A4"};
-	BioTransformerAPI biotransformerAPI = new BioTransformerAPI();
+	//BioTransformerAPI biotransformerAPI = new BioTransformerAPI();
 	
 	public Cyp450BTransformer(BioSystemName bioSName) throws JsonParseException, JsonMappingException, 
 	FileNotFoundException, IOException, BioTransformerException, CDKException {
@@ -111,20 +115,20 @@ public class Cyp450BTransformer extends Biotransformer {
 	 */
 	public ArrayList<Biotransformation> predictCyp450BiotransformationsByMode(IAtomContainer substrate, int mode, boolean preprocess, boolean filter, double threshold)  throws Exception{
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-		BioTransformerAPIs cypReact = new BioTransformerAPIs();
-		ArrayList<Integer> substrateForEnzymes = cypReact.predictReactantForEnzymes(substrate, this.cyp450Enzymes);
-		if(substrateForEnzymes.isEmpty()){
-			return biotransformations;
-		}		
+		//BioTransformerAPI cypReact = new BioTransformerAPI();
+		//ArrayList<Integer> substrateForEnzymes = cypReact.predictReactantForEnzymes(substrate, this.cyp450Enzymes);
+		//if(substrateForEnzymes.isEmpty()){
+		//	return biotransformations;
+		//}
 		if(mode ==  1){
 			biotransformations = this.predictCyp450Biotransformations(substrate, false, preprocess, filter, threshold);
 		}
-		else if(mode == 2){
-			biotransformations = this.predictCypProductBiotransformation(substrate, substrateForEnzymes, false);
-		}
-		else if(mode == 3){			
-			biotransformations = this.predictByCyProductAndCyp450(substrate, preprocess, filter,  threshold, substrateForEnzymes);
-		}
+		//else if(mode == 2){
+		//	biotransformations = this.predictCypProductBiotransformation(substrate, substrateForEnzymes, false);
+		//}
+		//else if(mode == 3){
+		//	biotransformations = this.predictByCyProductAndCyp450(substrate, preprocess, filter,  threshold, substrateForEnzymes);
+		//}
 		else throw new Exception("You have selected the predictCyp450BiotransformationsByMode module, please input the mode you  want to run");
 		return biotransformations;
 	}
@@ -150,7 +154,10 @@ public class Cyp450BTransformer extends Biotransformer {
 		for(int i = 0; i < enzymeIdx.size(); i++){
 			enzymeList.add(this.cyp450Enzymes[enzymeIdx.get(i)]);
 		}
-		IAtomContainerSet cyProduct_results = biotransformerAPI.runOnePrediction(oneMole, enzymeList, false, 0.0);
+		BioTransformerAPI_cyproduct cyProduct = new BioTransformerAPI_cyproduct();
+		IAtomContainerSet cyProduct_results = cyProduct.runOnePrediction(oneMole, enzymeList, false, 0.0);
+		//IAtomContainerSet cyProduct_results = biotransformerAPI.runOnePrediction(oneMole, enzymeList, false, 0.0);
+
 		for(int i = 0; i < cyProduct_results.getAtomContainerCount(); i++){
 			if(cyProduct_results.getAtomContainer(i).getAtomCount() > 1){
 				removedNonsense.addAtomContainer(cyProduct_results.getAtomContainer(i));
@@ -233,7 +240,10 @@ public class Cyp450BTransformer extends Biotransformer {
 		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(substrate);
 		IAtomContainer oneMole = this.smiParser.parseSmiles(this.smiGen.create(substrate));
 		oneMole.setProperties(substrate.getProperties());
-		IAtomContainerSet cyProduct_results = this.biotransformerAPI.runOnePrediction(oneMole, enzymeList, false, 0.0);
+
+		BioTransformerAPI_cyproduct cyProduct = new BioTransformerAPI_cyproduct();
+		IAtomContainerSet cyProduct_results = cyProduct.runOnePrediction(oneMole, enzymeList, false, 0.0);
+		//IAtomContainerSet cyProduct_results = this.biotransformerAPI.runOnePrediction(oneMole, enzymeList, false, 0.0);
 		//IAtomContainerSet cyProduct_results = BioTransformerAPI.runOnePrediction(substrates.getAtomContainer(t), enzymeList);
 		IAtomContainerSet removedNonsense = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 		for(int i = 0; i < cyProduct_results.getAtomContainerCount(); i++){

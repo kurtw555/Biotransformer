@@ -21,13 +21,14 @@ import biotransformer.utils.HumanMetabolismBiotransformerFunctions;
 import biotransformer.utils.HumanMetabolismHelpingFunctions;
 import biotransformer.utils.Utilities;
 import biotransformer.validateModels.MultivariateDistribution;
-import reactantpredictor.BioTransformerAPIs;
+//import reactantpredictor.biotransformerapi;
+import biotransformerapi.BioTransformerAPI;
 
 public class SimulateHumanMetabolism {
 	HumanMetabolismHelpingFunctions hm_helper = new HumanMetabolismHelpingFunctions();
 	HumanMetabolismBiotransformerFunctions hm_transform = new HumanMetabolismBiotransformerFunctions();
 	Double scoreThreshold = 0.0;
-	BioTransformerAPIs reactantPred = new BioTransformerAPIs();	
+	BioTransformerAPI reactantPred = new BioTransformerAPI();
 	MultivariateDistribution mnd;
 	
 	protected LinkedHashMap<String, MetabolicReaction> combinedReactionsHash = new LinkedHashMap<String, MetabolicReaction>();
