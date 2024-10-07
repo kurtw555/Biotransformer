@@ -31,16 +31,16 @@ public class Statistics {
 	protected Cyp450BTransformer hCyp450BT;
 	protected Phase2BTransformer phaseII0BT;
 	protected ECBasedBTransformer ecBase450BT;
-
-	public Statistics() throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException, CDKException{
+	boolean useSubstitution;
+	public Statistics(boolean useDB, boolean useSubstitution) throws Exception{
+		this.useSubstitution = useSubstitution;
 		// TODO Auto-generated constructor stub
-		humanBT 		= new Biotransformer(BioSystemName.HUMAN);
-		hgutBT 		= new HGutBTransformer();
+		humanBT 		= new Biotransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		hgutBT 		= new HGutBTransformer(useDB, useSubstitution);
 		envmBT 	= new EnvMicroBTransformer();
-		hCyp450BT	= new Cyp450BTransformer(BioSystemName.HUMAN);
-		phaseII0BT	= new Phase2BTransformer(BioSystemName.HUMAN);
-		ecBase450BT	= new ECBasedBTransformer(BioSystemName.HUMAN);
+		hCyp450BT	= new Cyp450BTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		phaseII0BT	= new Phase2BTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		ecBase450BT	= new ECBasedBTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
 		
 		generateStatistics();
 	}

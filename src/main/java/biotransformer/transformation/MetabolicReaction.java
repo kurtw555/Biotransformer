@@ -54,50 +54,6 @@ public class MetabolicReaction {
 
 	}
 	
-	
-//	public MetabolicReaction(String r_name) {
-//		SMIRKSManager smrkMan = new SMIRKSManager(SilentChemObjectBuilder.getInstance());
-//		this.name = r_name.toString();
-//		this.reactionSMIRKS = MRPatterns.setOfSMIRKS.get(name);
-//
-//		for (String smarts : MRPatterns.setOfReactantSMARTS.get(name)) {
-//			if (!(smarts.trim().isEmpty())) {
-//				this.reactantsSMARTS.add(smarts);
-//			}
-//		}
-//
-//		if (!(MRPatterns.setOfExcludedReactantSMARTS.get(r_name.toString()) == null)) {
-//			for (String n_smarts : MRPatterns.setOfExcludedReactantSMARTS.get(name)) {
-//				if (!(n_smarts.trim().isEmpty())) {
-//					this.excludedReactantsSMARTS.add(n_smarts);
-//				}
-//			}
-//		}
-//		this.smirksReaction = smrkMan.parse(reactionSMIRKS);
-//
-//	}
-//	
-//	public MetabolicReaction(ReactionName r_name) {
-//		SMIRKSManager smrkMan = new SMIRKSManager(SilentChemObjectBuilder.getInstance());
-//		this.name = r_name.toString();
-//		this.reactionSMIRKS = MRPatterns.setOfSMIRKS.get(name);
-//
-//		for (String smarts : MRPatterns.setOfReactantSMARTS.get(name)) {
-//			if (!(smarts.trim().isEmpty())) {
-//				this.reactantsSMARTS.add(smarts);
-//			}
-//		}
-//
-//		if (!(MRPatterns.setOfExcludedReactantSMARTS.get(r_name.toString()) == null)) {
-//			for (String n_smarts : MRPatterns.setOfExcludedReactantSMARTS.get(name)) {
-//				if (!(n_smarts.trim().isEmpty())) {
-//					this.excludedReactantsSMARTS.add(n_smarts);
-//				}
-//			}
-//		}
-//		this.smirksReaction = smrkMan.parse(reactionSMIRKS);
-//
-//	}
 
 	
 	
@@ -128,34 +84,6 @@ public class MetabolicReaction {
 		this.excludedReactantsSMARTS = excludedReactantsSMARTS;
 		this.smirksReaction = smrkMan.parse(reactionSMIRKS);
 	}
-	
-//	public MetabolicReaction(String smirks) {
-//		SMIRKSManager smrkMan = new SMIRKSManager(SilentChemObjectBuilder.getInstance());
-//		reactionSMIRKS = smirks;
-//		smirksReaction = smrkMan.parse(reactionSMIRKS);
-//	}
-
-//	public MetabolicReaction(ReactionName r_name, SMIRKSManager smrkMan) {
-//		name = r_name.toString();
-//		reactionSMIRKS = MRPatterns.setOfSMIRKS.get(r_name.toString());
-//
-//		for (String smarts : MRPatterns.setOfReactantSMARTS.get(r_name.toString())) {
-//			if (!(smarts.trim().isEmpty())) {
-//				reactantsSMARTS.add(smarts);
-//			}
-//		}
-//
-//		if (!(MRPatterns.setOfExcludedReactantSMARTS.get(r_name.toString()) == null)) {
-//			for (String n_smarts : MRPatterns.setOfExcludedReactantSMARTS.get(r_name.toString())) {
-//				if (!(n_smarts.trim().isEmpty())) {
-//					excludedReactantsSMARTS.add(n_smarts);
-//				}
-//			}
-//		}
-//
-//		smirksReaction = smrkMan.parse(reactionSMIRKS);
-//
-//	}
 
 	public MetabolicReaction(String smirks, SMIRKSManager smrkMan) {
 		reactionSMIRKS = smirks;

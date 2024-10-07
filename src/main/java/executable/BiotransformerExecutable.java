@@ -428,7 +428,8 @@ public class BiotransformerExecutable {
 					throw new IllegalArgumentException("\n\tIllegalArgumentException. Please provide a valid biotranformer sequence.");				
 				}
 				else if(bseq.length()>1) {
-					biotransformerSeqeuence = new BiotransformerSequence(bseq);
+					biotransformerSeqeuence = new BiotransformerSequence(bseq, false, false);
+					//biotransformerSeqeuence = new BiotransformerSequence(bseq);
 				}		
 			}
 			
@@ -513,7 +514,8 @@ public class BiotransformerExecutable {
 							
 							
 							if (singleInput !=null){
-								MetaboliteFinder mtf = new MetaboliteFinder();
+								MetaboliteFinder mtf = new MetaboliteFinder(false, false);
+								//MetaboliteFinder mtf = new MetaboliteFinder();
 								number_of_molecules++;
 								System.out.println("\n\nMolecule no. " + number_of_molecules);
 								if(oFormat.contentEquals("csv")){
@@ -524,8 +526,8 @@ public class BiotransformerExecutable {
 								}
 							}
 							else {
-								MetaboliteFinder mtf = new MetaboliteFinder();
-								IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+								MetaboliteFinder mtf = new MetaboliteFinder(false, false);
+								IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 								IAtomContainerSet metabolites = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 	
 								for(IAtomContainer atc : containers.atomContainers()){
@@ -568,7 +570,7 @@ public class BiotransformerExecutable {
 							if (singleInput !=null){
 								number_of_molecules++;
 								System.out.println("\n\nMolecule no. " + number_of_molecules);
-								MetaboliteFinder mtf = new MetaboliteFinder();
+								MetaboliteFinder mtf = new MetaboliteFinder(false, false);
 								
 								if(oFormat.contentEquals("csv")){
 									mtf.findAllEnvMicroMetabolitesToCSV(singleInput, dmassesOrFormulas, massToleranceThreshold, nrOfSteps, annotate, outputF, opt);
@@ -578,8 +580,8 @@ public class BiotransformerExecutable {
 								}
 							}
 							else {
-								MetaboliteFinder mtf = new MetaboliteFinder();
-								IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+								MetaboliteFinder mtf = new MetaboliteFinder(false, false);
+								IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 								IAtomContainerSet metabolites = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 	
 								for(IAtomContainer atc : containers.atomContainers()){
@@ -621,7 +623,7 @@ public class BiotransformerExecutable {
 							if (singleInput !=null){
 								number_of_molecules++;
 								System.out.println("\n\nMolecule no. " + number_of_molecules);
-								MetaboliteFinder mtf = new MetaboliteFinder();
+								MetaboliteFinder mtf = new MetaboliteFinder(false,false);
 								
 								if(oFormat.contentEquals("csv")){
 									mtf.findSuperbioMetabolitesToCSV(singleInput, dmassesOrFormulas, massToleranceThreshold, annotate, outputF, opt, cyp450Mode);
@@ -633,8 +635,8 @@ public class BiotransformerExecutable {
 								
 							}
 							else {
-								MetaboliteFinder mtf = new MetaboliteFinder();
-								IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+								MetaboliteFinder mtf = new MetaboliteFinder(false, false);
+								IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 								IAtomContainerSet metabolites = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 	
 								for(IAtomContainer atc : containers.atomContainers()){
@@ -676,7 +678,7 @@ public class BiotransformerExecutable {
 							}
 						}		
 						IAtomContainerSet metabolites = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
-						MetaboliteFinder mtf = new MetaboliteFinder();
+						MetaboliteFinder mtf = new MetaboliteFinder(false, false);
 						if (singleInput !=null){
 							number_of_molecules++;
 							
@@ -686,9 +688,9 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {
-							IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+							IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 							if (containers.getAtomContainerCount()>0){
-								containers = FileUtilities.parseSdf(inputFileName);					
+								containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 
 								for(IAtomContainer atc : containers.atomContainers()){
 									number_of_molecules++;
@@ -724,7 +726,7 @@ public class BiotransformerExecutable {
 				if(biotransformerType != null) {
 					
 					if (optionsToBtTypes.get(biotransformerType.toLowerCase()) == bType.CYP450){
-						Cyp450BTransformer cyp450bt = new Cyp450BTransformer(BioSystemName.HUMAN);
+						Cyp450BTransformer cyp450bt = new Cyp450BTransformer(BioSystemName.HUMAN, false, false);
 						ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 //						int cyp450Mode = 1;
 //						//Set the default mode as 1
@@ -740,9 +742,9 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {
-							IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+							IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 							if (containers.getAtomContainerCount()>0){
-								containers = FileUtilities.parseSdf(inputFileName);					
+								containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 
 								for(IAtomContainer atc : containers.atomContainers()){
 									number_of_molecules++;
@@ -770,7 +772,7 @@ public class BiotransformerExecutable {
 					}
 					
 					else if (optionsToBtTypes.get(biotransformerType.toLowerCase()) == bType.ECBASED) {
-						ECBasedBTransformer ecbt =  new ECBasedBTransformer(BioSystemName.HUMAN);
+						ECBasedBTransformer ecbt =  new ECBasedBTransformer(BioSystemName.HUMAN, false, false);
 			
 						ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 						if (singleInput !=null){
@@ -779,9 +781,9 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {
-							IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+							IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 							if (containers.getAtomContainerCount()>0){
-								containers = FileUtilities.parseSdf(inputFileName);
+								containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 
 								for(IAtomContainer atc : containers.atomContainers()){
 									number_of_molecules++;
@@ -807,7 +809,7 @@ public class BiotransformerExecutable {
 						}
 					}
 					else if (optionsToBtTypes.get(biotransformerType.toLowerCase()) == bType.HGUT){
-						HGutBTransformer hgut = new HGutBTransformer();
+						HGutBTransformer hgut = new HGutBTransformer(false, false);
 									
 						ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 						if (singleInput !=null){
@@ -816,7 +818,7 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {			
-							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, hgut.inchiGenFactory);					
+							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, hgut.inchiGenFactory);
 							if (containers.getAtomContainerCount()>0){
 								for(IAtomContainer atc : containers.atomContainers()){
 									number_of_molecules++;
@@ -841,7 +843,7 @@ public class BiotransformerExecutable {
 						}						
 					}
 					else if (optionsToBtTypes.get(biotransformerType.toLowerCase()) == bType.PHASEII){
-						Phase2BTransformer phase2b = new Phase2BTransformer(BioSystemName.HUMAN);
+						Phase2BTransformer phase2b = new Phase2BTransformer(BioSystemName.HUMAN, false, false);
 						
 						ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 						if (singleInput !=null){
@@ -851,7 +853,7 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {
-							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, phase2b.inchiGenFactory);					
+							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, phase2b.inchiGenFactory);
 							for(IAtomContainer atc : containers.atomContainers()){
 								number_of_molecules++;
 								System.out.println("\n\nMolecule no. " + number_of_molecules);
@@ -884,7 +886,7 @@ public class BiotransformerExecutable {
 //						if(mode!=null){
 //							cyp450Mode = Integer.parseInt(mode);
 //						}
-						HumanSuperBioTransformer hsbt = new HumanSuperBioTransformer();
+						HumanSuperBioTransformer hsbt = new HumanSuperBioTransformer(false, false);
 						
 						ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 						if (singleInput !=null){
@@ -893,7 +895,7 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {
-							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, hsbt.getInChIGenFactory());					
+							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, hsbt.getInChIGenFactory());
 							for(IAtomContainer atc : containers.atomContainers()){
 								number_of_molecules++;
 								System.out.println("\n\nMolecule no. " + number_of_molecules);
@@ -918,7 +920,7 @@ public class BiotransformerExecutable {
 					}
 					
 					else if (optionsToBtTypes.get(biotransformerType.toLowerCase()) == bType.ALLHUMAN){
-						HumanSuperBioTransformer hsbt = new HumanSuperBioTransformer();
+						HumanSuperBioTransformer hsbt = new HumanSuperBioTransformer(false, false);
 //						int cyp450Mode = 1;
 //						if(mode!=null){
 //							cyp450Mode = Integer.parseInt(mode);
@@ -930,7 +932,7 @@ public class BiotransformerExecutable {
 							successful_predictions++;
 						}
 						else {
-							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, hsbt.getInChIGenFactory());					
+							IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, hsbt.getInChIGenFactory());
 							System.out.println("Nr. of molecules: " + containers.getAtomContainerCount() );
 							for(IAtomContainer atc : containers.atomContainers()){
 								number_of_molecules++;
@@ -971,7 +973,7 @@ public class BiotransformerExecutable {
 						}
 						else {
 							ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-							IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+							IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 							for(IAtomContainer atc : containers.atomContainers()){
 								number_of_molecules++;
 								System.out.println("\n\nMolecule no. " + number_of_molecules);
@@ -1004,9 +1006,9 @@ public class BiotransformerExecutable {
 						successful_predictions++;
 					}
 					else {
-						IAtomContainerSet containers = FileUtilities.parseSdf(inputFileName);
+						IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 						if (containers.getAtomContainerCount()>0){
-							containers = FileUtilities.parseSdf(inputFileName);					
+							containers = FileUtilities.parseSdf_or_CSV(inputFileName);
 
 							for(IAtomContainer atc : containers.atomContainers()){
 								number_of_molecules++;
@@ -1023,7 +1025,7 @@ public class BiotransformerExecutable {
 							
 						}				
 					}
-					UniversalBioTransformer hsbt = new UniversalBioTransformer();
+					UniversalBioTransformer hsbt = new UniversalBioTransformer(false, false);
 					System.out.println("Format: " + oFormat);
 					if(oFormat.contentEquals("csv")){
 						System.out.println("saving to "+ outputF);

@@ -37,7 +37,7 @@ public class MReactionSets {
 		
 		smrkMan	= new SMIRKSManager(SilentChemObjectBuilder.getInstance());
 		
-		LinkedHashMap<Object,Object> standardizationR = JsonUtils.ingestJson("database/standardizationReactions.json", this.mapper);
+		LinkedHashMap<Object,Object> standardizationR = JsonUtils.ingestJson("btkb/standardizationReactions.json", this.mapper);
 		addStandardizationReactions(standardizationR);
 //		System.out.println("Number of standardizaton reactions: " + this.standardizationReactions.size());
 //		this.standardizationReactions.get(0).display();

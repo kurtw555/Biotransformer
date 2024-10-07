@@ -61,10 +61,9 @@ public class BioSystem {
 		mapper.configure(Feature.ALLOW_COMMENTS, true);
 		mapper.configure(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
 		
+		//BioSystem bt = new BioSystem(BioSystemName.GUTMICRO, mapper);
 		BioSystem bt = new BioSystem(BioSystemName.GUTMICRO, mapper);
-		 LinkedHashMap<String,Object> kbase = bt.loadBioSystemSpecificKnowledgebaseAndMetadata(mapper); 
-//		System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-//		kbase));
+		LinkedHashMap<String,Object> kbase = bt.loadBioSystemSpecificKnowledgebaseAndMetadata(mapper); 
 	}
 	
 	public BioSystem(BioSystemName bsName, ObjectMapper mapper) throws JsonParseException, JsonMappingException, 
@@ -84,14 +83,9 @@ public class BioSystem {
 	}
 	
 	
-	public BioSystem (BioSystemName bsName, ArrayList<Enzyme> enzymes) {
-		this.name 			= bsName;
-		this.enzymes		= enzymes;
-	}
-	
 	
 	public enum BioSystemName {
-		HUMAN, ENVMICRO, GUTMICRO
+		HUMAN, ENVMICRO, GUTMICRO, ABIOTIC
 	}
 
 	
@@ -117,16 +111,12 @@ public class BioSystem {
 		LinkedHashMap<String,Object> kbase 		= new LinkedHashMap<String,Object>();	
 		LinkedHashMap<Object,Object> configData = JsonUtils.ingestJson(CONFIGPATH, mapper);	
 		String kb_base_path 					= (String)((LinkedHashMap<Object, Object>) configData.
-				get("database_locations")).get("kb_base_path");
-		
-		//		System.out.println(configData);
-		
+				get("database_locations")).get("kb_base_path");		
 		/*
 		 * Assigning the path to machine-learning models
 		 */
 		this.mlmodels = (LinkedHashMap<String, Object>)((LinkedHashMap<String, Object>) configData.
 				get("abstracted_models")).get(this.name.toString());
-		//		System.out.println(configData);
 		
 		/*
 		 * Collecting data related to this biosystem.
@@ -141,11 +131,12 @@ public class BioSystem {
 		collectMetabolicReactions(kbase, kb_biosystem_config, kb_base_path, mapper);
 		collectEnzymeReactionMappings(kbase, kb_biosystem_config, kb_base_path, mapper);
 		collectBiosystemsEnzymes(kbase, kb_biosystem_config, kb_base_path, mapper);
-		collectReactionORatios(kbase, kb_biosystem_config, kb_base_path, mapper);	
+		try {
+			collectReactionORatios(kbase, kb_biosystem_config, kb_base_path, mapper);	
+		}catch (Exception e) {
+			System.out.println("The biosystemsReactionORatios.json will not be used when running Abiotic transformation");
+		}
 		collectReactionPrecedenceRules(kbase, kb_biosystem_config, kb_base_path, mapper);
-		
-		// System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-		//							kbase));
 		return kbase;
 		
 	}
@@ -164,13 +155,11 @@ public class BioSystem {
 		LinkedHashMap<Object, Object>  allEnzymes = ingestBioSystemSpecificTable(mapper, 
 				Paths.get(kb_biosystem_config.get("path").toString(), "enzymes.json").toString(), 
 				kb_base_path, (boolean) kb_biosystem_config.get("use_base_files"));		
-		//		System.out.println("allEnzymes : " + ((LinkedHashMap<Object, Object>) allEnzymes.get("enzymes")).size() + " enzymes." );
 		if(allEnzymes.size() != 0) {
 			kbase.put("allEnzymes", allEnzymes.get("enzymes"));
 			if(((LinkedHashMap<Object, Object>) kbase.get("allEnzymes")).size() == 0) {
 				BioTransformerException b = new BioTransformerException("No enzymes could be found for the " + this.name.toString() + " biosystem.\n"
 						+ "\nAborting...\n\n");
-				//				System.err.println(b);
 				throw b;
 			}		
 		}else {
@@ -180,8 +169,6 @@ public class BioSystem {
 					+ "specified in \"config.json\","			
 					+ " or in the base folder (\"" + kb_base_path + "\")."
 					+ "\nAborting...\n\n");
-			
-			//			System.err.print(me);
 			throw me;
 		}
 	}
@@ -199,14 +186,11 @@ public class BioSystem {
 		LinkedHashMap<Object, Object>  allReactions = ingestBioSystemSpecificTable(mapper, 
 				Paths.get(kb_biosystem_config.get("path").toString(), "metabolicReactions.json").toString(), 
 				kb_base_path, (boolean) kb_biosystem_config.get("use_base_files"));		
-		//		System.out.println("allEnzymes : " + ((LinkedHashMap<Object, Object>) allReactions.get("reactions")).size() + " reactions." );
 		if(allReactions.size() != 0) {
-			kbase.put("allReactions", allReactions.get("reactions"));
-			
+			kbase.put("allReactions", allReactions.get("reactions"));			
 			if(((LinkedHashMap<Object, Object>) kbase.get("allReactions")).size() == 0) {
 				BioTransformerException c = new BioTransformerException("No metabolic reactions could be found for the " + this.name.toString() + " biosystem.\n"
 						+ "\nAborting...\n\n");
-				//				System.err.println(c);
 				throw c;
 			}
 		}else {
@@ -216,8 +200,6 @@ public class BioSystem {
 					+ "specified in \"config.json\","			
 					+ " or in the base folder (\"" + kb_base_path + "\")."
 					+ "\nAborting...\n\n");
-			
-			//			System.err.print(mar);
 			throw mar;	
 		}		
 
@@ -225,14 +207,11 @@ public class BioSystem {
 			LinkedHashMap<Object, Object>  pathways = ingestBioSystemSpecificTable(mapper, 
 					Paths.get(kb_biosystem_config.get("path").toString(), "pathways.json").toString(), 
 					kb_base_path, (boolean) kb_biosystem_config.get("use_base_files"));
-			//			System.out.println(pathways.size());
 			if(pathways.size() != 0) {
-				kbase.put("pathways", pathways.get("metabolicPathways"));
-				//				System.out.println("pathways : " + ((LinkedHashMap<Object, Object>) kbase.get("pathways")).size() + " pathways." );				
+				kbase.put("pathways", pathways.get("metabolicPathways"));		
 				if(((LinkedHashMap<Object, Object>) kbase.get("pathways")).size() == 0) {
 					BioTransformerException d = new BioTransformerException("No metabolic pathways could be found for the " + this.name.toString() + " biosystem.\n"
 							+ "\nAborting...\n\n");
-					//					System.err.println(d);
 					throw d;
 				}				
 			}
@@ -256,16 +235,12 @@ public class BioSystem {
 		LinkedHashMap<Object, Object>  enzymeReactionList = ingestBioSystemSpecificTable(mapper, 
 				Paths.get(kb_biosystem_config.get("path").toString(), "enzymeReactions.json").toString(), 
 				kb_base_path, (boolean) kb_biosystem_config.get("use_base_files"));		
-		//		System.out.println(enzymeReactionList.size() );
 		if(enzymeReactionList.size() != 0) {
 			
 			kbase.put("enzymeReactionList", ((LinkedHashMap<String, ArrayList<String>>) enzymeReactionList.get("eReactionLists")) );
-			//			System.out.println(((LinkedHashMap<String, ArrayList<String>>) kbase.get("enzymeReactionList")));
-			//			System.out.println("enzymeReactionList : " + ((LinkedHashMap<String, Object>) kbase.get("enzymeReactionList")).size() + " enzyme-reaction mappings." );
 			if(((HashMap<Object, Object>) kbase.get("enzymeReactionList")).size() == 0) {
 				BioTransformerException e = new BioTransformerException("No metabolic enzyme-reactions mapping could be found for the " + this.name.toString() + " biosystem.\n"
 						+ "\nAborting...\n\n");
-				//				System.err.println(e);
 				throw e;				
 			}
 		}else {
@@ -275,8 +250,6 @@ public class BioSystem {
 					+ "specified in \"config.json\","			
 					+ " or in the base folder (\"" + kb_base_path + "\")."
 					+ "\nAborting...\n\n");
-			
-			//			System.err.print(mer);
 			throw mer;	
 		}		
 	}
@@ -298,15 +271,10 @@ public class BioSystem {
 				kb_base_path, (boolean) kb_biosystem_config.get("use_base_files"));
 		
 		if(bioSysEnzymeList.size() != 0) {
-			kbase.put("bioSysEnzymeList", ((LinkedHashMap<String, ArrayList<String>>) bioSysEnzymeList.get("enzymeLists")).get(this.name.toString()));
-		//			System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-		//					(kbase.get("bioSysEnzymeList"))));
-		//			System.out.println("bioSysEnzymeList : " + ((ArrayList<String>) kbase.get("bioSysEnzymeList")).size() + " enzyme mappings for this biosystem." );
-			
+			kbase.put("bioSysEnzymeList", ((LinkedHashMap<String, ArrayList<String>>) bioSysEnzymeList.get("enzymeLists")).get(this.name.toString()));			
 			if(((ArrayList<String>) kbase.get("bioSysEnzymeList")).size() == 0) {				
 				BioTransformerException g = new BioTransformerException("No metabolic enzyme mapping could be found for the " + this.name.toString() + " biosystem.\n"
 						+ "\nAborting...\n\n");
-				//				System.err.println(g);
 				throw g;
 
 			}
@@ -317,8 +285,6 @@ public class BioSystem {
 					+ "specified in \"config.json\","			
 					+ " or in the base folder (\"" + kb_base_path + "\")."
 					+ "\nAborting...\n\n");
-			
-			//			System.err.print(mbe);
 			throw mbe;
 		
 		}			
@@ -341,14 +307,10 @@ public class BioSystem {
 
 		if(reactionsOcurrenceRatios.size() != 0) {		
 			LinkedHashMap<String, Double> t = (LinkedHashMap<String, Double>) ((LinkedHashMap<Object, Object>)reactionsOcurrenceRatios.get("reactionsORatios")).get(this.name.toString());
-			kbase.put("reactionsOcurrenceRatios", t);
-			//			System.out.println(kbase.get("reactionsOcurrenceRatios"));
-			//			System.out.println("reactionsOcurrenceRatios : " + ((LinkedHashMap<String, Double>) kbase.get("reactionsOcurrenceRatios")).size() + " reaction-score mappings for this biosystem." );
-			
+			kbase.put("reactionsOcurrenceRatios", t);			
 			if(((LinkedHashMap<String, Double>) kbase.get("reactionsOcurrenceRatios")).size() == 0) {
 				BioTransformerException e = new BioTransformerException("No metabolic reaction-score mapping could be found for the " + this.name.toString() + " biosystem.\n"
 						+ "\nAborting...\n\n");
-				//				System.err.println(e);
 				throw e;				
 			}
 		}else {
@@ -358,8 +320,6 @@ public class BioSystem {
 					+ "specified in \"config.json\","			
 					+ " or in the base folder (\"" + kb_base_path + "\")."
 					+ "\nAborting...\n\n");
-			
-			//  System.err.print(mrr);
 			throw mrr;	
 		}		
 	}
@@ -379,19 +339,23 @@ public class BioSystem {
 
 		if(reactionPrecedenceRules.size() != 0) {		
 			LinkedHashMap<String, Object> t = (LinkedHashMap<String, Object>) ((LinkedHashMap<Object, Object>)reactionPrecedenceRules.get("precedenceRules")).get(this.name.toString());
-			LinkedHashMap<String, Object> rels = (LinkedHashMap<String, Object>) t.get("relative");
+			LinkedHashMap<String, Object> rels;
+			try{
+				rels = (LinkedHashMap<String, Object>) t.get("relative");
+			}catch(Exception e) {
+				rels = new LinkedHashMap<>();
+			}
 //			String[] strict = (String[]) t.get("strict");
-			ArrayList<String> strict = (ArrayList<String>) t.get("strict");
-			//			System.out.println("rels : " + rels);
-			//			System.out.println("strict : " + strict);
+			ArrayList<String> strict;
+			try{
+				strict = (ArrayList<String>) t.get("strict");
+			}catch(Exception e) {
+				strict = new ArrayList<>();
+			}
 			LinkedHashMap<String, Object> n = new LinkedHashMap<String, Object>();
 			n.put("relative", rels);
 			n.put("strict", strict);
 			kbase.put("reactionPrecedenceRules", n);
-			//			System.out.println("reactionPrecedenceRules : " + rels.size() + " relative precedence rules, and "
-			//					+ strict.size()
-			//					+ " strict precedence rules for this biosystem." );
-			
 			if(((LinkedHashMap<String, Object>) kbase.get("reactionPrecedenceRules")).size() == 0) {
 				System.err.println("No	precedence mapping could be found for the " + this.name.toString() + " biosystem.\n\n");
 				
@@ -419,8 +383,6 @@ public class BioSystem {
 		 */				
 
 		LinkedHashMap<String,Object> kbase = loadBioSystemSpecificKnowledgebaseAndMetadata(mapper);
-		// System.out.println(kbase);
-
 		/*
 		 * Parsing the list of enzymes and their attributes.
 		 */	
@@ -435,22 +397,15 @@ public class BioSystem {
 		 */		
 		
 		LinkedHashMap<String,Object> allReactions 	= (LinkedHashMap<String,Object>) kbase.get("allReactions");
-		LinkedHashMap<String,Object> allEnzymes 	= (LinkedHashMap<String, Object>) kbase.get("allEnzymes");
-		
+		LinkedHashMap<String,Object> allEnzymes 	= (LinkedHashMap<String, Object>) kbase.get("allEnzymes");		
 		for( String e : ((ArrayList<String>)kbase.get("bioSysEnzymeList")) ){			
 			ArrayList<MetabolicReaction> enzymeSpecificReactionObjects = new ArrayList<MetabolicReaction>();
-			// System.out.println(e);
-			// System.out.println( ((LinkedHashMap<String, ArrayList<String>>)  kbase.get("enzymeReactionList")).get(e)   );
 			for(String s : ((LinkedHashMap<String, ArrayList<String>>)  kbase.get("enzymeReactionList")).get(e) ){
-				// System.out.println("s: " + s);
 				if(this.reactionsHash.containsKey(s)){
 					enzymeSpecificReactionObjects.add(this.reactionsHash.get(s));
 				} 				
 				else {						
-					// System.out.println(mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-					//	(LinkedHashMap<String,Object>) allReactions.get(s)));
 					LinkedHashMap<String,Object> mrObj = (LinkedHashMap<String,Object>) allReactions.get(s);
-					//	System.out.println(mrObj);
 					String commonName = (String)mrObj.get("commonName");
 					if(commonName == null || commonName.contentEquals("")){
 						commonName = s;
@@ -467,9 +422,7 @@ public class BioSystem {
 			}
 			
 			 LinkedHashMap<String, Object> enz = (LinkedHashMap<String, Object>) allEnzymes.get(e);
-			 //	System.out.println(enz);
 			 LinkedHashMap<String, Object> biosystems = (LinkedHashMap<String, Object>) enz.get("biosystems");
-			 //	System.out.println(biosystems.get(this.name.toString()));
 			 String description = (String) enz.get("description");
 
 			 ArrayList<String> uniprot_ids = null;
@@ -478,10 +431,7 @@ public class BioSystem {
 				 uniprot_ids = (ArrayList<String>)  ((LinkedHashMap<String, Object>) 
 						 biosystems.get(this.name.toString())).get("uniprot_ids");
 				 cellularLocations = (ArrayList<String>)  ((LinkedHashMap<String, Object>) 
-						 biosystems.get(this.name.toString())).get("cellular_locations");
-				 
-			// System.out.println("uniprot_ids 		= " +  uniprot_ids);
-			// System.out.println("cellularLocations 	= " + cellularLocations);				 
+						 biosystems.get(this.name.toString())).get("cellular_locations");			 
 			 }
 
 			 String acceptedName =  (String) enz.get("acceptedName");
@@ -495,27 +445,18 @@ public class BioSystem {
 			// enzy.display();
 		}
 		
-		//		System.out.println(reactionsHash);
-		//		System.err.println(reactionsHash.size());
-		//		System.err.println(this.reactionsHash);
 		
 		/*
 		 * Now generating a pathway map.
 		 */
 
 		LinkedHashMap<String, Object> allPathways = (LinkedHashMap<String, Object>) kbase.get("pathways");
+		if(allPathways == null || allPathways.isEmpty()) allPathways = new LinkedHashMap<String, Object>();
 		for(String pName : allPathways.keySet()) {
-//						System.out.println(pName);
-			LinkedHashMap<String,Object> lm = (LinkedHashMap<String, Object>) allPathways.get(pName);
-//			System.out.println(lm.keySet().contains(this.name.toString()));
-			
+			LinkedHashMap<String,Object> lm = (LinkedHashMap<String, Object>) allPathways.get(pName);			
 			if(lm.containsKey(this.name.toString())){
 				LinkedHashMap<String,Object> bPaths = (LinkedHashMap<String,Object>) lm.get(this.name.toString());
-				//				System.out.println(this.name.toString());
-				//				System.out.println(lm);
 				ArrayList<String> enz = (ArrayList<String>) bPaths.get("enzymes");
-//				System.out.println(enz);
-				
 				this.metPathwaysHash.put(pName, new ArrayList<Enzyme>());
 				
 				for(String e_n : enz) {

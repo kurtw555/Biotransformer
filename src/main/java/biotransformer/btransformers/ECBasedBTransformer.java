@@ -9,14 +9,11 @@
  */
 package biotransformer.btransformers;
 
-import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.URISyntaxException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.json.simple.parser.ParseException;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -27,13 +24,15 @@ import org.openscience.cdk.interfaces.IAtomContainerSet;
 import ambit2.smarts.query.SMARTSException;
 import biotransformer.biomolecule.Enzyme;
 import biotransformer.biosystems.BioSystem.BioSystemName;
+import biotransformer.dbrelevant.RetriveFromDB;
 import biotransformer.transformation.Biotransformation;
 import biotransformer.transformation.MetabolicReaction;
 import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.ChemicalClassFinder.ChemicalClassName;
 import biotransformer.utils.FileUtilities;
-import exception.BioTransformerException;
+import biotransformer.utils.HandlePolymers;
+import biotransformer.utils.Utilities;
 
 /**
  * @author Djoumbou Feunang, Yannick
@@ -42,20 +41,20 @@ import exception.BioTransformerException;
 public class ECBasedBTransformer extends Biotransformer {
 
 	/**
+	 * @throws Exception 
 	 * @throws ParseException 
-	 * @throws IOException 
-	 * @throws CDKException 
 	 * @throws URISyntaxException 
 	 * @bioSName Name of the biosystem to simulate.
 	 * 
 	 */
-	public ECBasedBTransformer(BioSystemName bioSName) throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException {		
+	public ECBasedBTransformer(BioSystemName bioSName, boolean useDB, boolean useSubstitution) throws Exception {		
 		// TODO Auto-generated constructor stub
-		super(bioSName);
+		super(bioSName, useDB, useSubstitution);
 		setEnzymesList();
 		setReactionsList();
-
+		if(useDB) {
+			this.rfdb = new RetriveFromDB("hmdb", "all", false, 30, useSubstitution);
+		}
 	}
 	
 	/**
@@ -134,11 +133,14 @@ public class ECBasedBTransformer extends Biotransformer {
 					
 					enz.getName().contains("EC_2_8_2") ||
 					enz.getName().contentEquals("SULFOTRANSFERASE") ||
-					enz.getName().contentEquals("UDP_GLUCURONOSYLTRANSFERASE")
-					
+					enz.getName().contentEquals("UDP_GLUCURONOSYLTRANSFERASE") ||
+					enz.getName().equals("EC_2_3_1_7") ||
+					enz.getName().equals("EC_2_3_1_13")
 					){
-				
 				this.enzymesByreactionGroups.get("ecBasedConjugations").add(enz);
+//				if(enz.getName().equals("EC_2_3_1_7")){
+//					System.out.println("check");
+//				}
 				for(MetabolicReaction m : enz.getReactionSet()){
 					if(!rNames.contains(m.name)){
 						rNames.add(m.name);
@@ -461,8 +463,6 @@ public class ECBasedBTransformer extends Biotransformer {
 				for(Biotransformation bt : biotransformations) {
 					boolean goodBiontransfo =  true;
 					btCounter++;
-	//				System.out.println("Biotransformation nr. " +  btCounter);
-	//				System.out.println("Biotransformation type. " +  bt.getReactionType());
 					for( IAtomContainer at : bt.getProducts().atomContainers() ){
 	//					System.out.println(at.getProperty("InChI"));
 						if(ChemStructureExplorer.isInvalidPhase2Metabolite(at)){
@@ -533,8 +533,6 @@ public class ECBasedBTransformer extends Biotransformer {
 			for(Biotransformation bt : biotransformations) {
 				boolean goodBiontransfo =  true;
 				btCounter++;
-//				System.out.println("Biotransformation nr. " +  btCounter);
-//				System.out.println("Biotransformation type. " +  bt.getReactionType());
 				for( IAtomContainer at : bt.getProducts().atomContainers() ){
 //					System.out.println(at.getProperty("InChI"));
 					if(ChemStructureExplorer.isInvalidPhase2Metabolite(at)){
@@ -657,22 +655,16 @@ public class ECBasedBTransformer extends Biotransformer {
 
 	
 	public ArrayList<Biotransformation> simulateECBasedMetabolismStep(IAtomContainer molecule, boolean preprocess, boolean filter, Double scoreThreshold) throws Exception{
-		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-		
+		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();		
 		try{
 			if(ChemStructureExplorer.isMixture(molecule) || ChemStructureExplorer.isCompoundInorganic(molecule)){
 	//			throw new IllegalArgumentException("The substrate must not be a mixture.");
 				throw new IllegalArgumentException(molecule.getProperty("InChI")+ "\nThe substrate must be: 1) organic, and; 2) not a mixture.");
 	//			return biotransformations;
 			}
-			else if(ChemStructureExplorer.isBioTransformerValid(molecule)){
-				
-				// Rewrite this when the sChemCategoryPathways has been added & parsed
-	//			System.out.println("LIPID??");
-				
+			else if(ChemStructureExplorer.isBioTransformerValid(molecule)){				
 				ChemicalClassName chemClassName = ChemicalClassFinder.findChemicalClass(molecule);
-//				System.out.print("Chemical class: ");
-//				System.out.println(chemClassName);
+
 				
 				if(!(chemClassName == ChemicalClassName.ETHER_LIPID || chemClassName == ChemicalClassName.GLYCEROLIPID || chemClassName == ChemicalClassName.GLYCEROPHOSPHOLIPID ||
 						chemClassName == ChemicalClassName.SPHINGOLIPID ||chemClassName == ChemicalClassName.GLYCEROL_3_PHOSPHATE_INOSITOL ||
@@ -742,30 +734,45 @@ public class ECBasedBTransformer extends Biotransformer {
 	public ArrayList<Biotransformation> simulateECBasedMetabolismChain(IAtomContainerSet molecules, boolean preprocess, boolean filter,int nrOfSteps, Double scoreThreshold) throws Exception{
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 		IAtomContainerSet containers = molecules;
-		int counter = 0;
+		ArrayList<Biotransformation> depolymerization_bts = this.processPolymer(containers);
+		IAtomContainerSet monomers = extractProductsFromBiotransformations(depolymerization_bts);
+		ArrayList<String> substrateProcessed = new ArrayList<>();	
+		containers = Utilities.getNovelSubstrates(containers, substrateProcessed);
+		if(monomers != null && !monomers.isEmpty()) containers.add(monomers);
 		try {
 			while(nrOfSteps>0){
-				counter++;
-				ArrayList<Biotransformation> currentBiotransformations = this.simulateECBasedMetabolismStep(containers, preprocess, filter, scoreThreshold);
+				ArrayList<Biotransformation> currentBiotransformations = new ArrayList<Biotransformation>();
+				for(int i = 0; i < containers.getAtomContainerCount(); i++) {
+					IAtomContainer oneMole = containers.getAtomContainer(i);
+					if(this.useDB && this.rfdb.fcc.retriveFromDB(oneMole)) {
+						ArrayList<Biotransformation> db_results = this.rfdb.getBiotransformationRetrievedFromDB(oneMole, true);
+						if(db_results!=null && !db_results.isEmpty()) {
+							currentBiotransformations.addAll(db_results);
+							containers.removeAtomContainer(i);
+							i = i - 1;
+						}
+					}
+				}
+				ArrayList<Biotransformation> currentBiotransformations_fromBT = this.simulateECBasedMetabolismStep(containers, preprocess, filter, scoreThreshold);
+				currentBiotransformations.addAll(currentBiotransformations_fromBT);
 				nrOfSteps--;
 				if(!currentBiotransformations.isEmpty()){
 					biotransformations.addAll(currentBiotransformations);
 					containers.removeAllAtomContainers();
-					containers = extractProductsFromBiotransformations(currentBiotransformations);
-					
+					containers = extractProductsFromBiotransformations(currentBiotransformations);				
+					containers = Utilities.getNovelSubstrates(containers, substrateProcessed);
+					substrateProcessed = Utilities.updateProcessedSubstratePool(substrateProcessed, containers);
 				}
 				else{
 					break;
 				}
 			}
-	//		System.out.println("Stopped after " + counter + " steps.");
 			return biotransformations;
 		}
 		catch(Exception e) {
 			throw e;
 		}
 	}
-
 	
 	public void  simulateECBasedMetabolismAndSaveToSDF(IAtomContainerSet containers, int nrOfSteps, Double scoreThreshold, String outputFolder, boolean annotate) throws Exception {	
 		if(!containers.isEmpty()){
@@ -790,7 +797,7 @@ public class ECBasedBTransformer extends Biotransformer {
 	
 	
 	public void  simulateECBasedMetabolismAndSaveToSDF(String sdfFileName, int nrOfSteps, Double scoreThreshold, String outputFolder, boolean annotate) throws Exception {
-		IAtomContainerSet containers = FileUtilities.parseSdf(sdfFileName);
+		IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV(sdfFileName);
 		simulateECBasedMetabolismAndSaveToSDF(containers, nrOfSteps, scoreThreshold, outputFolder, annotate);
 	}
 	

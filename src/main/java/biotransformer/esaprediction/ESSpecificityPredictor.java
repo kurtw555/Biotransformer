@@ -21,7 +21,7 @@ import biotransformer.transformation.MetabolicReaction;
 import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.ChemicalClassFinder.ChemicalClassName;
-//import reactantpredictor.BioTransformerAPIs;
+//import biotransformerapicypreact.BioTransformerAPI_cypreact;
 import biotransformerapi.BioTransformerAPI;
 
 /**
@@ -84,6 +84,7 @@ public class ESSpecificityPredictor {
 					chemClasses.contains(ChemicalClassName.SPHINGOLIPID))) {
 				
 				if(this.bSys.name.toString() == "HUMAN"){
+					//BioTransformerAPI_cypreact reactantPred = new BioTransformerAPI_cypreact();
 					BioTransformerAPI reactantPred = new BioTransformerAPI();
 					validCyp450 = reactantPred.predictReactant(substrate, cyp450EnzymeList);
 				}

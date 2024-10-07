@@ -119,11 +119,7 @@ public class FeatureGenerator {
 		 * @throws IOException
 		 * @throws CDKException
 		 */
-		public ArrayList<String> generateMolecularFeatures(IAtomContainerSet set, String pathToInputFile)
-				throws IOException, CDKException {
-			//String pathToOutputFile = pathToInputFile.split(".sdf")[0] + ".csv";
-			//FileOutputStream fos = new FileOutputStream(pathToOutputFile);
-			//OutputStreamWriter osw = new OutputStreamWriter(fos);
+		public ArrayList<String> generateMolecularFeatures(IAtomContainerSet set, String pathToInputFile) throws IOException, CDKException {
 			StringBuffer sb = new StringBuffer();
 			int i;
 			for (i = 0; i < 11; i++) {
@@ -138,7 +134,6 @@ public class FeatureGenerator {
 				CDKHydrogenAdder adder = CDKHydrogenAdder.getInstance(container.getBuilder());
 				AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(container);
 				sb.setLength(0);
-//				System.out.println(i);
 				try {
 					String s = generateMolecularFeatures(container);
 					result.add(s);
@@ -152,10 +147,6 @@ public class FeatureGenerator {
 					System.err.println("Compound nr." + (i+1) + ": Title = " + container.getProperty(CDKConstants.TITLE) + "\n"+ "java.lang.NullPointerException.");
 				}
 			}
-			//osw.close();
-			//fos.close();
-			// System.out.println(count);
-			// System.out.println("finish.");
 			return result;
 		}
 
@@ -353,35 +344,13 @@ public class FeatureGenerator {
 				String inchikey = gen.getInchiKey();
 				System.out.println( inchikey + " : " + npe.getMessage());
 			}
-//			try{
-//				ns.calculateSurface();
-//			}catch (java.lang.IllegalArgumentException je){
-//				
-//			}		
-			
 
-
-//				molecular = hbac + "," + hbdc + "," + aratCount + "," + lsp + "," + bCount + "," + abCount + 
-//						"," + rbCount + "," + alogp + "," + xlog + "," + mhlogp + "," + apol +"," + tpsa + "," +
-//						weight + "," + bpdres + "," + bcut + "," + adc + "," + adm + "," + acg + "," + bcg +
-//						"," + moi + "," + asa;
 				
-				molecular = hbac + "," + hbdc + "," + aratCount + "," + lsp + "," + bCount + "," + abCount + 
+			molecular = hbac + "," + hbdc + "," + aratCount + "," + lsp + "," + bCount + "," + abCount + 
 						"," + rbCount + "," + alogp + "," + xlog + "," + mhlogp + "," + apol +"," + tpsa + "," +
 						weight + "," + bpdres + "," + adc + "," + adm + "," + acg + "," + bcg +
 						"," + moi + "," + asa;	
-	//
-//				String label = StringUtils.join(hbacD.getDescriptorNames(),",") + "," + StringUtils.join(hbdcD.getDescriptorNames(),",") + "," + 
-//						StringUtils.join(aacd.getDescriptorNames(),",") + "," + StringUtils.join(lpsD.getDescriptorNames(),",") + "," +
-//						StringUtils.join(bcD.getDescriptorNames(),",") + "," + StringUtils.join(abcD.getDescriptorNames(),",") + "," +
-//						StringUtils.join(rbcD.getDescriptorNames(),",") + "," + StringUtils.join(alogpD.getDescriptorNames(),",") + "," +
-//						StringUtils.join(Xlogpd.getDescriptorNames(),",") + "," + 	StringUtils.join(mhlogpD.getDescriptorNames(),",") + "," +
-//						StringUtils.join(Apold.getDescriptorNames(),",") + "," + StringUtils.join(Tpsad.getDescriptorNames(),",") + "," +
-//						StringUtils.join(weightD.getDescriptorNames(),",") + "," + StringUtils.join(bpdresD.getDescriptorNames(),",") + "," +
-//						StringUtils.join(adcD.getDescriptorNames(),",") + "," + StringUtils.join(admD.getDescriptorNames(),",") + "," +	
-//						StringUtils.join(agcD.getDescriptorNames(),",") + "," + StringUtils.join(bgcD.getDescriptorNames(),",") + "," +			
-//						StringUtils.join(moD.getDescriptorNames(),",") + "," + "AllSurfaceArea";
-//				System.out.println(label);
+
 				
 			return molecular;
 		}
@@ -432,7 +401,6 @@ public class FeatureGenerator {
 				}
 				
 			}
-			// System.out.println("finish.");
 			return result;
 		}
 
@@ -509,8 +477,6 @@ public class FeatureGenerator {
 			String[] molecular = new String[length];
 			for (i = 0; i < length; i++) {
 				IAtom a = mol.getAtom(i);
-				// IAtomType Atom=satm.findMatchingAtomType(mol, a);
-				// System.out.println(Atom.getAtomTypeName());
 				for (int k = 0; k < 24; k++)
 					symbol[k] = 0;
 				int bond_1 = 0;
@@ -567,8 +533,8 @@ public class FeatureGenerator {
 		 * @throws CDKException, NoSuchAtomTypeException
 		 */
 		public String[] generateAtomicFeatures(IAtomContainer molecule) throws CDKException, NoSuchAtomTypeException {
-			IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();
-			int index;
+			//IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();
+			//int index;
 			IAtomContainer mol = molecule;
 			AtomDegreeDescriptor degree = new AtomDegreeDescriptor();
 			AtomHybridizationDescriptor hy = new AtomHybridizationDescriptor();
@@ -584,7 +550,7 @@ public class FeatureGenerator {
 			String[] atomics = new String[length];
 			for (i = 0; i < length; i++) {
 				IAtom a = mol.getAtom(i);
-				index = i + 1;
+				//index = i + 1;
 				String []res=new String[9];
 				DescriptorValue d = degree.calculate(a, mol);
 				res[0] = d.getValue().toString();
@@ -596,6 +562,7 @@ public class FeatureGenerator {
 				res[3] = e.getValue().toString();
 				DescriptorValue ps = psc.calculate(a, mol);
 				res[4] = ps.getValue().toString();
+				System.out.println(a.getSymbol() + ": " + mol.indexOf(a));
 				DescriptorValue pt = ptc.calculate(a, mol);
 				res[5] = pt.getValue().toString();
 				DescriptorValue pe = pen.calculate(a, mol);

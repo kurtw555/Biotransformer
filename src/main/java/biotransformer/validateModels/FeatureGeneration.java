@@ -30,7 +30,6 @@ import org.openscience.cdk.tools.CDKHydrogenAdder;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
-import predictor.PredictLogD;
 
 public class FeatureGeneration {
 	SmilesParser sp = new SmilesParser(DefaultChemObjectBuilder.getInstance());
@@ -41,7 +40,10 @@ public class FeatureGeneration {
 	public static final String[] atomTypeLookupTable = { "C.1", "C.2", "C.3", "C.ar", "C.cat", "N.1",
 			"N.2", "N.3", "N.4", "N.ar", "N.am", "N.pl3", "O.2", "O.3", "O.co2", "S.2",
 			"S.3", "S.O", "S.O2", "P.3", "F", "Cl", "Br", "I" };
-	public static final String[] featuresToRemove = {"SMILES", "C.cat" , "N.1", "F", "Cl", "Br", "I", "halogens", "nitriles", "dihydropyridines", "alkyl carbamates", "sulfonamides" , "hydrazone gorups"};
+	public static final String[] featuresToRemove_Urine = {"SMILES", "C.cat" , "N.1", "F", "Cl", "Br", "I", "halogens", "nitriles", "dihydropyridines", "alkyl carbamates", "sulfonamides" , "hydrazone groups"};
+	public static final String[] featuresToRemove_ECBased = {"SMILES", "C.cat", "N.1", "F", "Cl", "I", "nitriles", "dihydropyridines", "hydrazone groups"};
+	public static final String[] featuresToRemove_gut_substrate = {"SMILES", "C.1", "C.cat", "N.1", "F", "Cl", "Br", "I", "halogens", "nitriles", "alkyl carbamates", "sulfone groups", "tert-alicyclic amines", "terminal acetylenes", "morpholine rings", "sulfonamides", "hydrazone groups", "thiophene rings"};
+	public static final String[] featuresToRemove_gut_metabolite = {"SMILES", "C.cat", "S.O", "F", "Cl", "Br", "I", "halogens", "alkyl carbamates", "sulfone groups", "tert-alicyclic amines", "terminal acetylenes", "morpholine rings", "sulfonamides", "thiophene rings", "hydrazone groups"};
 	public static final String[] continuousFeatures = {"mass", "rotatableBonds",	"acceptor",	"donor", "logD", "tpsa"};
 	//SMILES string is an identifier and should not be used as a feature
 	
@@ -108,14 +110,14 @@ public class FeatureGeneration {
 		HBondDonorCountDescriptor donor_bonds = new HBondDonorCountDescriptor();
 		double donor = Double.parseDouble(donor_bonds.calculate(oneMole).getValue().toString());
 		
-		PredictLogD logD_predictor = new PredictLogD();
-		Double logD = logD_predictor.predictLogD(oneMole);
+		//PredictLogD logD_predictor = new PredictLogD();
+		//Double logD = logD_predictor.predictLogD(oneMole);
 		
 		TPSADescriptor tpsa_des = new TPSADescriptor();
 		String tpsa_value = tpsa_des.calculate(oneMole).getValue().toString();
 		Double tpsa = Double.parseDouble(tpsa_value);
 		
-		String resultString = mass + "," + rotatableBonds + "," + acceptor + "," + donor + "," + logD + "," + tpsa;
+		String resultString = mass + "," + rotatableBonds + "," + acceptor + "," + donor + "," + 0.0 + "," + tpsa;
 		return resultString;
 	}
 	/**
@@ -170,7 +172,13 @@ public class FeatureGeneration {
 			Integer atomIdx = molecule.indexOf(closestAtoms.get(k));
 			IAtomType[] atomTypeList = typeMatcher.findMatchingAtomTypes(molecule); 
 			IAtomType atomType = atomTypeList[atomIdx];
-			String type = atomType.getAtomTypeName();
+			String type;
+			if(atomType != null){
+				type = atomType.getAtomTypeName();
+			}
+			else{
+				type = molecule.getAtom(atomIdx).getSymbol();
+			}
 			//Find the matched atomType and update the value to current + "1"
 			for(int i = 0; i < atomTypeLookupTable.length; i++){
 				if(type.equalsIgnoreCase(atomTypeLookupTable[i])){
@@ -237,7 +245,7 @@ public class FeatureGeneration {
 		resultMap.put("para-hydroxylation sites", "[$([cH]1[cH]cc(c[cH]1)~[$([#8,$([#8]~[H,c,C])])]),$([cH]1[cH]cc(c[cH]1)~[$([#7X3,$([#7](~[H,c,C])~[H,c,C])])]),$([cH]1[cH]cc(c[cH]1)-!:[$([NX3H,$(NC(=O)[H,c,C])])])]");
 		resultMap.put("phenolic OH with exclusion", "[$(c1(-[OX2H])ccccc1);!$(cc-!:[CH2]-[OX2H]);!$(cc-!:C(=O)[O;H1,-]);!$(cc-!:C(=O)-[NH2])]");
 		resultMap.put("phenols", "[OX2H]-c1ccccc1");
-		resultMap.put("aromatic hydroxyl gorups", "c[OH1]");
+		resultMap.put("aromatic hydroxyl groups", "c[OH1]");
 		resultMap.put("tert-alicyclic amines", "[$([N&R1]1(-C)CCC1),$([N&R1]1(-C)CCCC1),$([N&R1]1(-C)CCCCC1),$([N&R1]1(-C)CCCCCC1),$([N&R1]1(-C)CCCCCCC1)]");
 		resultMap.put("XCCNR groups", "[$(N(-[CH3])-C-[$(C~O),$(C-a),$(C-N),$(C=C)]),$(N(-[CH2][CH3])-C-[$(C~O),$(C-a),$(C-N),$(C=C)])]");
 		resultMap.put("quarternary nitrogens", "[$([NX4+]),$([NX4]=*)]");
@@ -252,7 +260,7 @@ public class FeatureGeneration {
 		resultMap.put("imide groups", "N(-C(=O))-C=O");
 		resultMap.put("primary amides", "C(=O)-[NH2]");
 		resultMap.put("N functional groups attched to aromatics", "[$(a-[NX3H2]),$(a-[NH1][NH2]),$(a-C(=[OX1])[NH1][NH2]),$(a-C(=[NH])[NH2])]");
-		resultMap.put("hydrazone gorups", "C=N-[NX3]");
+		resultMap.put("hydrazone groups", "C=N-[NX3]");
 		return resultMap;
 	}
 }

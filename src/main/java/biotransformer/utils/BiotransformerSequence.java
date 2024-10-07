@@ -26,26 +26,33 @@ public class BiotransformerSequence {
 	protected ArrayList<BiotransformerSequenceStep> sequence;
 	protected double scoreThreshold;
 	protected Biotransformer utilityBiotransformer = null;
-	
-
-	public BiotransformerSequence(ArrayList<BiotransformerSequenceStep> mySequence, 
-			double scoreThreshold) {
+	boolean useDB;
+	boolean useSubstitution;
+	public BiotransformerSequence(ArrayList<BiotransformerSequenceStep> mySequence, boolean useDB, double scoreThreshold, boolean useSubstituition) {
 		this.sequence 		= mySequence;
 		this.scoreThreshold = scoreThreshold;
+		this.useDB = useDB;
+		this.useSubstitution = useSubstituition;
 	}	
-	public BiotransformerSequence(ArrayList<BiotransformerSequenceStep> mySequence) {
+	public BiotransformerSequence(ArrayList<BiotransformerSequenceStep> mySequence, boolean useDB, boolean useSubstituition) {
 		this.sequence = mySequence;
 		this.scoreThreshold = 0.0;
+		this.useDB = useDB;
+		this.useSubstitution = useSubstituition;
 	}
 
 	
-	public BiotransformerSequence(String mySequence, double scoreThreshold) throws Exception {
+	public BiotransformerSequence(String mySequence, boolean useDB, double scoreThreshold, boolean useSubstituition) throws Exception {
 		this.sequence 		= createSequenceFromString(mySequence, scoreThreshold);
 		this.scoreThreshold = scoreThreshold;
+		this.useDB = useDB;
+		this.useSubstitution = useSubstituition;
 	}
-	public BiotransformerSequence(String mySequence) throws Exception {
+	public BiotransformerSequence(String mySequence, boolean useDB, boolean useSubstituition) throws Exception {
 		this.sequence 		= createSequenceFromString(mySequence, 0.0);
 		this.scoreThreshold = 0.0;
+		this.useDB = useDB;
+		this.useSubstitution = useSubstituition;
 	}	
 	
 	
@@ -56,11 +63,9 @@ public class BiotransformerSequence {
 			ArrayList<BiotransformerSequenceStep> seq = new ArrayList<BiotransformerSequenceStep>();
 			String[] steps = mySequence.split(";");
 			for(String step : steps) {
-//				System.out.println("step: " + step);
 				String[] attr = step.split(":");
 				if(attr.length==2) {
 					String btype_str = attr[0].trim().toUpperCase();
-//					System.out.println('"'+attr[1].trim()+'"');
 					int nsteps = Integer.valueOf(attr[1].trim());
 					
 					try {
@@ -71,15 +76,7 @@ public class BiotransformerSequence {
 					}
 					catch (Exception e) {
 						System.err.println(e.getMessage());
-					}
-					
-//					if (btype_ != null) {
-//						System.out.println("btype = " + btype_);
-//					}
-//					else {
-//						throw new IllegalArgumentException("Illegal biotransformer sequence type '" + btype_str + "'.");
-//					}
-									
+					}							
 					seq.add(new BiotransformerSequenceStep(Biotransformer.bType.valueOf(btype_str), nsteps, scoreThreshold));
 				}
 				else {
@@ -120,56 +117,37 @@ public class BiotransformerSequence {
 		
 		for(BiotransformerSequenceStep step : this.sequence) {
 			ArrayList<Biotransformation> currentBiots =  new ArrayList<Biotransformation>();
-			
-			if(step.btype == bType.ALLHUMAN) {
+				
+			if(step.btype == bType.CYP450) {
 				if(btransformers.get(step.btype) == null) {
-					btransformers.put(step.btype, new HumanSuperBioTransformer());
-				}
-				currentBiots = ((HumanSuperBioTransformer) btransformers.get(step.btype)).predictAllHumanBiotransformationChain(currentMetabolites, step.nOfIterations, this.scoreThreshold, cyp450Mode);
-			}
-			
-			if(step.btype == bType.SUPERBIO) {
-				if(btransformers.get(step.btype) == null) {
-					btransformers.put(step.btype, new HumanSuperBioTransformer());
-				}
-				for(IAtomContainer atc : currentMetabolites.atomContainers()) {
-					currentBiots = ((HumanSuperBioTransformer) btransformers.get(step.btype)).simulateHumanSuperbioMetabolism(atc, this.scoreThreshold ,cyp450Mode);
-				}				
-			}		
-			else if(step.btype == bType.CYP450) {
-				if(btransformers.get(step.btype) == null) {
-					btransformers.put(step.btype, new Cyp450BTransformer(BioSystemName.HUMAN));
+					btransformers.put(step.btype, new Cyp450BTransformer(BioSystemName.HUMAN, this.useDB, this.useSubstitution));
 				}
 				currentBiots = ((Cyp450BTransformer) btransformers.get(step.btype)).predictCyp450BiotransformationChainByMode(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold, cyp450Mode);			
 			}
 			else if(step.btype == bType.ECBASED) {
 				if(btransformers.get(step.btype) == null) {
-					btransformers.put(step.btype, new ECBasedBTransformer(BioSystemName.HUMAN));
+					btransformers.put(step.btype, new ECBasedBTransformer(BioSystemName.HUMAN, this.useDB, this.useSubstitution));
 				}
-				currentBiots = ((ECBasedBTransformer) btransformers.get(step.btype)).simulateECBasedMetabolismChain(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold);		
+				//currentBiots = ((ECBasedBTransformer) btransformers.get(step.btype)).simulateECBasedMetabolismChain(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold);		
+				currentBiots = ((ECBasedBTransformer) btransformers.get(step.btype)).simulateECBasedMetabolismChain(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold);	
 			}
 			else if(step.btype == bType.ENV) {
-//				System.out.println("Starting ENV");
 				if(btransformers.get(step.btype) == null) {
 					btransformers.put(step.btype, new EnvMicroBTransformer());
 				}
 				currentBiots = ((EnvMicroBTransformer) btransformers.get(step.btype)).applyEnvMicrobialTransformationsChain(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold);
-//				System.out.println("Number of env. biotransformations: " + currentBiots.size());
 			}			
 			else if(step.btype == bType.HGUT) {
 				if(btransformers.get(step.btype) == null) {
-					btransformers.put(step.btype, new HGutBTransformer());
+					btransformers.put(step.btype, new HGutBTransformer(this.useDB, this.useSubstitution));
 				}
-				currentBiots = ((HGutBTransformer) btransformers.get(step.btype)).simulateGutMicrobialMetabolism(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold);						
+				currentBiots = ((HGutBTransformer) btransformers.get(step.btype)).simulateGutMicrobialMetabolism_withDepolymerization(currentMetabolites, true, true, step.nOfIterations, this.scoreThreshold);						
 			}
 			else if(step.btype == bType.PHASEII) {
 				if(btransformers.get(step.btype) == null) {
-					btransformers.put(step.btype, new Phase2BTransformer(BioSystemName.HUMAN));
+					btransformers.put(step.btype, new Phase2BTransformer(BioSystemName.HUMAN, this.useDB, this.useSubstitution));
 				}
 				currentBiots = ((Phase2BTransformer) btransformers.get(step.btype)).applyPhase2TransformationsChainAndReturnBiotransformations(currentMetabolites, true, true, true, step.nOfIterations, this.scoreThreshold);										
-			}
-			else if(step.btype == bType.SUPERBIO) {
-				throw new IllegalArgumentException("Invalid Argument: SUPERBIO cannot be used within a sequence, as it is already a customized sequence. Valid biotransformers within a sequence are ALLHUMAN, CYP450, ECBASED, ENVMICRO, HGUT, PHASEII.");
 			}
 			
 			currentMetabolites.add(((Biotransformer) btransformers.get(step.btype)).extractProductsFromBiotransformations(currentBiots));
@@ -192,9 +170,7 @@ public class BiotransformerSequence {
 	
 	public ArrayList<Biotransformation> runSequence(IAtomContainerSet startingCompounds, double scoreThreshold, int cyp450Mode) throws Exception{
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-		SmilesGenerator smiGen 		= new SmilesGenerator().isomeric(); 
 		for(IAtomContainer starting_ac : startingCompounds.atomContainers()) {
-//			System.out.println(smiGen.create(starting_ac));
 			try {
 				biotransformations.addAll(runSequence(starting_ac, scoreThreshold, cyp450Mode));
 			}

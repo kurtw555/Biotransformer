@@ -9,6 +9,7 @@ package biotransformer.utils;
 import java.io.BufferedReader;
 //import java.io.BufferedWriter;
 import java.io.ByteArrayOutputStream;
+import java.io.File;
 //import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.FileReader;
@@ -55,65 +56,80 @@ public class FileUtilities {
 	}
 	
 	
-	public static IAtomContainerSet parseSdf(String sdfFileName) throws IOException {
-		IAtomContainerSet containers = DefaultChemObjectBuilder.getInstance().newInstance(
-				IAtomContainerSet.class);
-		
-		IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();
-		
-		IteratingSDFReader sdfr = new IteratingSDFReader(new FileReader(sdfFileName), bldr);
-		
-		while (sdfr.hasNext()){
-			IAtomContainer mol = sdfr.next();
-			containers.addAtomContainer(mol);	
-		}
-		
-		sdfr.close();
-		return containers;
-		
-	}
 	
-	
-	public static IAtomContainerSet parseSdfAndAddTitles(String sdfFileName, InChIGeneratorFactory igf) throws CDKException, IOException {
-		IAtomContainerSet containers = DefaultChemObjectBuilder.getInstance().newInstance(
-				IAtomContainerSet.class);
-		
-		IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();
-		
-		IteratingSDFReader sdfr = new IteratingSDFReader(new FileReader(sdfFileName), bldr);
-		
-		while (sdfr.hasNext()){
-			IAtomContainer molecule = sdfr.next();
-			String identifier = molecule.getProperty(CDKConstants.TITLE);
-			if(identifier == null){
-				identifier = molecule.getProperty("Name");
-				if(identifier == null){
-					identifier = molecule.getProperty("$MolName"); 
-					if(identifier == null){
-						identifier = molecule.getProperty("InChIKey");
-						if(identifier == null){
-							identifier = igf.getInChIGenerator(molecule).getInchiKey();
-						}
-					}
-
-				}
-				molecule.setProperty(CDKConstants.TITLE, identifier);
+	public static IAtomContainerSet parseSdf_or_CSV(String sdfFileName) throws Exception {
+		IAtomContainerSet containers = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
+		if(sdfFileName.contains(".sdf")) {
+			IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();
+			IteratingSDFReader sdfr = new IteratingSDFReader(new FileReader(sdfFileName), bldr);		
+			while (sdfr.hasNext()){
+				IAtomContainer mol = sdfr.next();
+				containers.addAtomContainer(mol);	
 			}
-			
-			containers.addAtomContainer(molecule);	
+			sdfr.close();
 		}
-		
-		sdfr.close();
+		else if(sdfFileName.contains(".tsv") || sdfFileName.contains(".csv")) {
+			SmilesParser sp = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+			BufferedReader br = new BufferedReader(new FileReader(new File(sdfFileName)));
+			String oneLine = br.readLine();//Title line
+			while((oneLine = br.readLine()) != null) {
+				IAtomContainer molecule = sp.parseSmiles(oneLine);
+				AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
+				containers.addAtomContainer(molecule);
+			}
+			br.close();	
+		}
+	
 		return containers;
 		
 	}
 	
 	
+	public static IAtomContainerSet parseSdfAndAddTitles_or_CSV(String sdfFileName, InChIGeneratorFactory igf) throws CDKException, IOException {
+		IAtomContainerSet containers = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
+		if(sdfFileName.contains(".sdf")) {
+			IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();		
+			IteratingSDFReader sdfr = new IteratingSDFReader(new FileReader(sdfFileName), bldr);		
+			while (sdfr.hasNext()){
+				IAtomContainer molecule = sdfr.next();
+				String identifier = molecule.getProperty(CDKConstants.TITLE);
+				if(identifier == null){
+					identifier = molecule.getProperty("Name");
+					if(identifier == null){
+						identifier = molecule.getProperty("$MolName"); 
+						if(identifier == null){
+							identifier = molecule.getProperty("InChIKey");
+							if(identifier == null){
+								identifier = igf.getInChIGenerator(molecule).getInchiKey();
+							}
+						}
 	
-	public static int countUniqueCompounds(String sdfFileName) throws CDKException, IOException{
+					}
+					molecule.setProperty(CDKConstants.TITLE, identifier);
+				}			
+				containers.addAtomContainer(molecule);	
+			}			
+			sdfr.close();			
+		}
+		else {
+			SmilesParser sp = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+			BufferedReader br = new BufferedReader(new FileReader(new File(sdfFileName)));
+			String oneLine = br.readLine();//Title line
+			while((oneLine = br.readLine()) != null) {
+				IAtomContainer molecule = sp.parseSmiles(oneLine);
+				AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
+				containers.addAtomContainer(molecule);
+			}
+		}
+		return containers;
+	}
+	
+	
+	
+	public static int countUniqueCompounds(String sdfFileName) throws Exception{
 		int count = 0;
 		
-		IAtomContainerSet containers = parseSdf(sdfFileName);
+		IAtomContainerSet containers = parseSdf_or_CSV(sdfFileName);
 		
 		LinkedHashMap<String, IAtomContainer> lmh  = new LinkedHashMap<String, IAtomContainer>();
 		
@@ -136,8 +152,8 @@ public class FileUtilities {
 	}
 
 	
-	public static void divideSdfFile(String sdfFileName, int limit) throws CDKException, IOException{
-		IAtomContainerSet containers = parseSdf(sdfFileName);
+	public static void divideSdfFile(String sdfFileName, int limit) throws Exception{
+		IAtomContainerSet containers = parseSdf_or_CSV(sdfFileName);
 		int part_nr = 1;
 		int at_nr=0;
 		

@@ -11,11 +11,13 @@ import java.util.Collections;
 
 import org.apache.commons.lang3.StringUtils;
 import org.openscience.cdk.AtomContainerSet;
+import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
 
 //import biotransformer.biomolecule.Enzyme.EnzymeName;
 import biotransformer.biosystems.BioSystem.BioSystemName;
+import biotransformer.utils.ChemStructureExplorer;
 
 public class Biotransformation {
 	private AtomContainerSet substrates =  new AtomContainerSet();
@@ -24,25 +26,21 @@ public class Biotransformation {
 	private AtomContainerSet products =  new AtomContainerSet();
 	private BioSystemName bsysName;
 	private Double score;
-	private String reactionID;
+	//private String reactionID;
 	
-	public Biotransformation(IAtomContainerSet substrates, String reactionType, ArrayList<String> enzymeNames, 
-			IAtomContainerSet products, BioSystemName bsysName) {
+	public Biotransformation(IAtomContainerSet substrates, String reactionType, ArrayList<String> enzymeNames, IAtomContainerSet products, BioSystemName bsysName) {
 		// TODO Auto-generated constructor stub
 		this.substrates.add(substrates);
-		this.reactionType 	= reactionType;
-		
+		this.reactionType 	= reactionType;		
 		if(enzymeNames !=null){
 			this.enzymeNames = enzymeNames;
-		}
-		
+		}		
 		this.products.add(products);
 		this.bsysName = bsysName;
 		this.score = 1.0;
 	}
 	
-	public Biotransformation(IAtomContainerSet substrates, String reactionType, ArrayList<String> enzymeNames, 
-			IAtomContainerSet products, Double score, BioSystemName bsysName) {
+	public Biotransformation(IAtomContainerSet substrates, String reactionType, ArrayList<String> enzymeNames, IAtomContainerSet products, Double score, BioSystemName bsysName) {
 		// TODO Auto-generated constructor stub		
 		this.substrates.add(substrates);
 		this.reactionType 	= reactionType;
@@ -140,9 +138,7 @@ public class Biotransformation {
 	
 	public boolean equals(Biotransformation biotransformation){
 		boolean same = false;
-//		this.display();
-//		biotransformation.display();
-		if(this.getReactionType() == biotransformation.getReactionType() && this.getBioSystemName() == biotransformation.getBioSystemName()){
+		if(this.getReactionType().equals(biotransformation.getReactionType()) && this.getBioSystemName().equals(biotransformation.getBioSystemName())){
 			if(this.products.getAtomContainerCount() == biotransformation.products.getAtomContainerCount()){
 				ArrayList<String> enz_1 = new ArrayList<String>();
 				ArrayList<String> enz_2 = new ArrayList<String>();
@@ -154,9 +150,6 @@ public class Biotransformation {
 				}
 				Collections.sort(enz_1);
 				Collections.sort(enz_2);
-//				System.out.println("enz_1: " + enz_1);
-//				System.out.println("enz_2: " + enz_2);
-//				System.out.println("equals? : " + StringUtils.join(enz_1).contentEquals(StringUtils.join(enz_2)));
 				
 				if(StringUtils.join(enz_1).contentEquals(StringUtils.join(enz_2))){
 					ArrayList<String> subs_1 = new ArrayList<String>();
@@ -169,9 +162,6 @@ public class Biotransformation {
 					}
 					Collections.sort(subs_1);
 					Collections.sort(subs_2);
-//					System.out.println("subs_1: " + subs_1);
-//					System.out.println("subs_2: " + subs_2);
-//					System.out.println("equals? : " + StringUtils.join(subs_1).contentEquals(StringUtils.join(subs_2)));
 					
 					if(StringUtils.join(subs_1).contentEquals(StringUtils.join(subs_2))){
 						ArrayList<String> prods_1 = new ArrayList<String>();
@@ -196,5 +186,9 @@ public class Biotransformation {
 
 		
 		return same;
+	}
+
+	public void setReactionType(String reactonType){
+		this.reactionType = reactonType;
 	}
 }

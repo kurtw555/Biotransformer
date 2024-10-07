@@ -25,6 +25,7 @@ import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
+import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 //import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
@@ -42,11 +43,13 @@ import exception.BioTransformerException;
 import phase2filter.prediction.P2Filter;
 
 public class HumanSuperBioTransformer {
-	
+	boolean useDB;
+	boolean useSubstitution;
 	protected ECBasedBTransformer ecb;
 	protected Cyp450BTransformer cyb;
 	protected HGutBTransformer hgb;
 	protected Phase2BTransformer p2b;
+	HandlePolymers hp = new HandlePolymers();
 	protected LinkedHashMap<String, LinkedHashMap<String, String>> compoundDictionary		
 													= new LinkedHashMap<String, LinkedHashMap<String, String>>();
 	
@@ -55,17 +58,17 @@ public class HumanSuperBioTransformer {
 													= new LinkedHashMap<String, MetabolicReaction>();
 	
 	public SmilesParser smiParser;
-	public SmilesGenerator smiGen 		= new SmilesGenerator().isomeric();
+	public SmilesGenerator smiGen 		= new SmilesGenerator(SmiFlavor.Isomeric);
 	
 	
-	public HumanSuperBioTransformer() throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException {
-
-		ecb		 			= new ECBasedBTransformer(BioSystemName.HUMAN);
-		cyb 				= new Cyp450BTransformer(BioSystemName.HUMAN);
-		hgb 				= new HGutBTransformer();
-		p2b 				= new Phase2BTransformer(BioSystemName.HUMAN);
-		smiParser			= ecb.getSmiParser();
+	public HumanSuperBioTransformer(boolean useDB, boolean useSubstitution) throws Exception {
+		this.useDB = useDB;
+		this.useSubstitution = useSubstitution;
+		this.ecb		 			= new ECBasedBTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		this.cyb 				= new Cyp450BTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		this.hgb 				= new HGutBTransformer(useDB, useSubstitution);
+		this.p2b 				= new Phase2BTransformer(BioSystemName.HUMAN,useDB, useSubstitution);
+		this.smiParser			= ecb.getSmiParser();
 		
 		
 		
@@ -373,7 +376,7 @@ public class HumanSuperBioTransformer {
 						 if(ChemStructureExplorer.getMajorIsotopeMass(a) >= 900.0){
 							 hGutSubstrates.addAtomContainer(a);
 						 }
-					 }
+					}
 					System.out.println("\n\n===========================================");
 					System.out.println("Predicting Human Gut Microbial Degradation");
 					System.out.println("===========================================\n\n");
@@ -413,12 +416,12 @@ public class HumanSuperBioTransformer {
 						System.out.println("\n\n===========================================");
 						System.out.println("Predicting human phase 2 metabolism");
 						System.out.println("===========================================\n\n");
-						 ArrayList<Biotransformation> phaseIIBiots = new  ArrayList<Biotransformation>();
-						 phaseIIBiots.addAll(this.p2b.applyPhase2TransformationsChainAndReturnBiotransformations(phaseIISubstrates, true, true, true, 1, scoreThreshold));
-						 products.add(this.ecb.extractProductsFromBiotransformations(phaseIIBiots));
-						 products = ChemStructureExplorer.uniquefy(products);
-						 biotransformations.addAll(phaseIIBiots);
-						 System.out.println("Number of PhaseII biotransformations: " + Utilities.selectUniqueBiotransformations(phaseIIBiots).size() + "\n\n\n");				
+						ArrayList<Biotransformation> phaseIIBiots = new  ArrayList<Biotransformation>();
+						phaseIIBiots.addAll(this.p2b.applyPhase2TransformationsChainAndReturnBiotransformations(phaseIISubstrates, true, true, true, 1, scoreThreshold));
+						products.add(this.ecb.extractProductsFromBiotransformations(phaseIIBiots));
+						products = ChemStructureExplorer.uniquefy(products);
+						biotransformations.addAll(phaseIIBiots);
+						System.out.println("Number of PhaseII biotransformations: " + Utilities.selectUniqueBiotransformations(phaseIIBiots).size() + "\n\n\n");				
 					 }
 				}
 
@@ -448,7 +451,7 @@ public class HumanSuperBioTransformer {
 	
 	public void simulateHumanSuperbioMetabolismFromSDF(String inputFileName, String outputFolder, boolean annotate) throws Exception {
 		
-		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, this.getInChIGenFactory());
+		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, this.getInChIGenFactory());
 		int nr = 0;
 		if(!containers.isEmpty()){
 			for(IAtomContainer molecule : containers.atomContainers()){
@@ -665,7 +668,7 @@ public class HumanSuperBioTransformer {
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 				
 		int nr = 0;
-		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, this.getInChIGenFactory());
+		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, this.getInChIGenFactory());
 		if(!containers.isEmpty()){
 			for(IAtomContainer molecule : containers.atomContainers()){
 				nr++;
@@ -692,7 +695,7 @@ public class HumanSuperBioTransformer {
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 				
 		int nr = 0;
-		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, this.getInChIGenFactory());
+		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, this.getInChIGenFactory());
 		if(!containers.isEmpty()){
 			for(IAtomContainer molecule : containers.atomContainers()){
 				nr++;
@@ -720,26 +723,15 @@ public class HumanSuperBioTransformer {
 	}
 	
 	public ArrayList<Biotransformation> simulateOneStepAllHuman(IAtomContainer target, double scoreThreshold, int cyp450Mode) throws Exception {
-		 ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-		 IAtomContainer molecule = ChemStructureManipulator.standardizeMoleculeWithCopy(target);
-//		 AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule);
-//		 System.out.println("SMILES BEFORE STANDARDIZATION: " + this.smiGen.create(target));		 
-//		 System.out.println("SMILES AFTER STANDARDIZATION: " + this.smiGen.create(molecule));
-//
-//		 System.out.println("INCHIKEY BEFORE STANDARDIZATION: " + this.getInChIGenFactory().getInChIGenerator(target).getInchiKey());		 
-//		 System.out.println("INCHIKEY AFTER STANDARDIZATION: " +  this.getInChIGenFactory().getInChIGenerator(molecule).getInchiKey());
-		 
-		 IAtomContainerSet products = DefaultChemObjectBuilder
-					.getInstance().newInstance(IAtomContainerSet.class);
-		 
-		
-//		System.out.println("Is Biotransformer valid: " + ChemStructureExplorer.isBioTransformerValid(target));
-		
-		if(ChemStructureExplorer.isBioTransformerValid(molecule)){
-			
-			ChemicalClassName clname = ChemicalClassFinder.findChemicalClass(molecule);
-			
-			
+		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
+		IAtomContainer molecule = ChemStructureManipulator.standardizeMoleculeWithCopy(target);		 
+		IAtomContainerSet products = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
+		if(this.hp.isPolymer(target)){
+			biotransformations.addAll(this.hp.converPolymerToMonomer_biotransformation(target));
+			return biotransformations;
+		}
+		if(ChemStructureExplorer.isBioTransformerValid(molecule)){			
+			ChemicalClassName clname = ChemicalClassFinder.findChemicalClass(molecule);						
 			
 			if( !(clname == ChemicalClassName.ETHER_LIPID || clname == ChemicalClassName.GLYCEROLIPID || 
 					clname == ChemicalClassName.GLYCEROPHOSPHOLIPID ||
@@ -866,7 +858,7 @@ public class HumanSuperBioTransformer {
 	
 	public ArrayList<Biotransformation> predictAllHumanBiotransformationChain(IAtomContainerSet containers, int nrOfSteps, double threshold, Integer cyp450Mode) throws Exception{
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
-
+		
 		int counter = 0;
 		while(nrOfSteps>0){
 			
@@ -887,6 +879,28 @@ public class HumanSuperBioTransformer {
 		return Utilities.selectUniqueBiotransformations(biotransformations);
 	}
 	
+	public ArrayList<Biotransformation> predictAllHumanBiotransformationChain_withDB(IAtomContainerSet containers, int nrOfSteps, double threshold, Integer cyp450Mode) throws Exception{
+		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
+		
+		int counter = 0;
+		while(nrOfSteps>0){
+			
+			counter++;
+			// System.out.println("\nStep: " + counter + "\n");
+			ArrayList<Biotransformation> currentBiotransformations = simulateOneStepAllHuman(containers, threshold, cyp450Mode);
+			nrOfSteps--;
+			if(!currentBiotransformations.isEmpty()){
+				biotransformations.addAll(currentBiotransformations);
+				containers.removeAllAtomContainers();
+				containers = this.ecb.extractProductsFromBiotransformations(currentBiotransformations);				
+			}
+			else{
+				break;
+			}
+		}
+
+		return Utilities.selectUniqueBiotransformations(biotransformations);
+	}
 	
 	
 	public void predictMetabolismAllHumanFromSDFtoSDF(String inputFileName, String outputFileName, boolean annotate, int cyp450Mode) throws Exception{
@@ -913,7 +927,7 @@ public class HumanSuperBioTransformer {
 	public void predictMetabolismAllHumanFromSDFAndSavetoSDF(String inputFileName, String outputFolder, int nrOfSteps, double scoreThreshold, boolean annotate, int cyp450Mode) throws Exception{
 			
 		int nr = 0;
-		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, this.getInChIGenFactory());
+		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, this.getInChIGenFactory());
 		for(IAtomContainer atc : containers.atomContainers()){
 			try{
 				String identifier = atc.getProperty(CDKConstants.TITLE);
@@ -933,7 +947,7 @@ public class HumanSuperBioTransformer {
 	public void predictMetabolismAllHumanFromSDFAndSavetoSingleSDF(String inputFileName, String outputFileName, int nrOfSteps, double scoreThreshold, boolean annotate, int cyp450Mode) throws Exception{
 		
 		int nr = 0;
-		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles(inputFileName, this.getInChIGenFactory());
+		IAtomContainerSet containers = FileUtilities.parseSdfAndAddTitles_or_CSV(inputFileName, this.getInChIGenFactory());
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 		for(IAtomContainer atc : containers.atomContainers()){
 			try{

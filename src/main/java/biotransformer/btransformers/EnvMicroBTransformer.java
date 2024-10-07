@@ -43,7 +43,7 @@ public class EnvMicroBTransformer extends Biotransformer {
 	
 	public EnvMicroBTransformer() throws JsonParseException, JsonMappingException, 
 	FileNotFoundException, IOException, BioTransformerException, CDKException {
-		super(BioSystemName.ENVMICRO);
+		super(BioSystemName.ENVMICRO, false, false);
 		setEnzymesList();
 		setReactionsList();
 
@@ -228,7 +228,7 @@ public class EnvMicroBTransformer extends Biotransformer {
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 		
 		for(IAtomContainer target : targets.atomContainers()) {
-			biotransformations.addAll(applyEnvMicrobialTransformationsChain(targets, preprocess, filter, nr_of_steps, scoreThreshold));
+			biotransformations.addAll(applyEnvMicrobialTransformationsChain(target, preprocess, filter, nr_of_steps, scoreThreshold));
 		}
 		
 		return biotransformations;

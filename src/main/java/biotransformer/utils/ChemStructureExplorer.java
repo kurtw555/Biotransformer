@@ -26,12 +26,15 @@ import java.util.List;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.DefaultChemObjectBuilder;
+import org.openscience.cdk.aromaticity.Aromaticity;
+import org.openscience.cdk.aromaticity.ElectronDonation;
 //import org.openscience.cdk.aromaticity.Aromaticity;
 //import org.openscience.cdk.aromaticity.ElectronDonation;
 import org.openscience.cdk.exception.CDKException;
 //import org.openscience.cdk.exception.InvalidSmilesException;
 //import org.openscience.cdk.fragment.ExhaustiveFragmenter;
 import org.openscience.cdk.graph.ConnectivityChecker;
+import org.openscience.cdk.graph.Cycles;
 //import org.openscience.cdk.graph.Cycles;
 import org.openscience.cdk.inchi.InChIGenerator;
 import org.openscience.cdk.inchi.InChIGeneratorFactory;
@@ -53,10 +56,12 @@ import org.openscience.cdk.qsar.descriptors.molecular.XLogPDescriptor;
 import org.openscience.cdk.qsar.result.IDescriptorResult;
 import org.openscience.cdk.ringsearch.RingSearch;
 import org.openscience.cdk.silent.SilentChemObjectBuilder;
+//import org.openscience.cdk.smarts.SmartsPattern;
+import org.openscience.cdk.smiles.smarts.SmartsPattern;
+import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 //import org.openscience.cdk.smiles.smarts.SMARTSQueryTool;
-import org.openscience.cdk.smiles.smarts.SmartsPattern;
 import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import org.openscience.cdk.tools.manipulator.MolecularFormulaManipulator;
 
@@ -115,6 +120,7 @@ public class ChemStructureExplorer {
 				
 		try {
 			IAtomContainer atc_0 = smiParser.parseSmiles(smiles);
+			AtomContainerManipulator.suppressHydrogens(atc_0);
 			IAtomContainer atc = atc_0;
 			if (standardize == true){
 				atc = ChemStructureManipulator.standardizeMoleculeWithCopy(atc_0);
@@ -170,27 +176,11 @@ public class ChemStructureExplorer {
 				
 		try {
 			LinkedHashMap<String, String> physchemprops = computePhysicoChemicalProperties(atc);			
-//			InChIGenerator gen0 = inchiGenFactory.getInChIGenerator(atc);
-//			atc.setProperty("InChI", gen0.getInchi());
-//			atc.setProperty("InChIKey", gen0.getInchiKey());
 			atc.setProperty("Molecular formula", ChemStructureExplorer.getMolecularFormula(atc));
-			
-//			atc.setProperties(physchemprops);
-			
-			
 			for(String p : physchemprops.keySet()) {
 				atc.setProperty(p, physchemprops.get(p));
-//				System.out.println(p + " : " + physchemprops.get(p));
 			}
-//			atc.setProperty("Major Isotope Mass", physchemprops.get("Major Isotope Mass"));
-//			atc.setProperty("ALogP", physchemprops.get("ALogP"));
-
 			results.put("atomContainer", atc);
-//			System.out.println(atc);
-//			System.out.println(atc.getProperties());
-//			System.out.println(atc.getProperties());
-			
-			
 		}catch (CDKException c){
 			results.put("errors", c.getMessage());
 		}
@@ -232,11 +222,6 @@ public class ChemStructureExplorer {
 		if (smartsPattern.hasSMARTSPattern(molecule) > 0) {
 			matches = smartsPattern.getUniqueMatchingAtoms(molecule);
 			IAtomContainer structure = smartsPattern.getMatchingStructure(molecule);
-
-//			for (int k = 0; k < structure.getAtomCount(); k++) {
-//				System.out.println(structure.getAtom(k));
-//			}
-//			System.out.println(matches);
 		}
 
 		return matches;
@@ -254,29 +239,22 @@ public class ChemStructureExplorer {
 	 * @throws CDKException
 	 * @throws IOException 
 	 */
-	public static boolean compoundMatchesReactionConstraints(MetabolicReaction reaction,
-			IAtomContainer molecule) throws SMARTSException, CDKException, IOException {
+	public static boolean compoundMatchesReactionConstraints(MetabolicReaction reaction, IAtomContainer molecule) throws SMARTSException, CDKException, IOException {
 		boolean match = true;
-
 		IChemObjectBuilder bldr = SilentChemObjectBuilder.getInstance();
-		
+		AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule);
 		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
-//		AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule);
-		
+		Aromaticity aromaticity = new Aromaticity(ElectronDonation.cdk(), Cycles.all());
+		aromaticity.apply(molecule);				
 		if (match) {
-//			System.out.println("reaction.getReactantSMARTS().size() : " + reaction.getReactantSMARTS().size() );
-//			System.out.println("reaction.getReactantSMARTS() == null? : " + reaction.getReactantSMARTS() == null );
-//			System.out.println(reaction.name);
-			
 			for (int j = 0; j < reaction.getReactantSMARTS().size(); j++) {
-//				System.out.println(reaction.getReactantSMARTS().get(j));
-				Pattern smp = SmartsPattern.create(reaction.getReactantSMARTS().get(j), bldr);				
+				SmartsPattern smp = SmartsPattern.create(reaction.getReactantSMARTS().get(j), bldr);
+				//smp.setPrepare(false);
 				boolean status = smp.matches(molecule);
-//				SmartsPatternCDK smartsPattern = new SmartsPatternCDK(reaction.getReactantSMARTS().get(j));
-//				boolean status = (smartsPattern.hasSMARTSPattern(molecule)>0);
-//				SMARTSQueryTool querytool = new SMARTSQueryTool(reaction.getReactantSMARTS().get(j), SilentChemObjectBuilder.getInstance());
-//				boolean status = querytool.matches(molecule);
-				
+				if(!status) {
+					//smp.setPrepare(true);
+					status = smp.matches(molecule);
+				}
 				if (!status) {
 					match = false;
 					break;
@@ -284,8 +262,7 @@ public class ChemStructureExplorer {
 			}
 		}
 		if(match && (!(reaction.getExcludedReactantsSMARTS() == null || reaction.getExcludedReactantsSMARTS().isEmpty()))){
-			for (int i = 0; i < reaction.getExcludedReactantsSMARTS().size(); i++) {
-	
+			for (int i = 0; i < reaction.getExcludedReactantsSMARTS().size(); i++) {	
 				Pattern smp2 = SmartsPattern.create(reaction.getExcludedReactantsSMARTS().get(i), bldr);
 				boolean status2 = smp2.matches(molecule);
 				if (status2) {
@@ -355,11 +332,18 @@ public class ChemStructureExplorer {
 		// Get InChIGenerator
 		String inchikey1 = mol1.getProperty("InChIKey");
 		String inchikey2 = mol2.getProperty("InChIKey");
-		
+		SmilesParser sp = new SmilesParser(DefaultChemObjectBuilder.getInstance());
+		SmilesGenerator sg = new SmilesGenerator(SmiFlavor.Isomeric);
 		
 		if(inchikey1 ==null){
 			try {
-				InChIGenerator gen1 = factory.getInChIGenerator(mol1);
+				String smiles = sg.create(mol1);
+				if(smiles.contains("*")) {					
+					smiles = smiles.replace("*", "O");
+				}
+				IAtomContainer modified = sp.parseSmiles(smiles);
+				modified.addProperties(mol1.getProperties());
+				InChIGenerator gen1 = factory.getInChIGenerator(modified);
 				inchikey1 = gen1.getInchiKey();
 			}catch(CDKException e){
 				try {
@@ -374,7 +358,13 @@ public class ChemStructureExplorer {
 
 		if(inchikey2 ==null){
 			try {
-				InChIGenerator gen2 = factory.getInChIGenerator(mol2);
+				String smiles = sg.create(mol2);
+				if(smiles.contains("*")) {
+					smiles = smiles.replace("*", "O");
+				}
+				IAtomContainer modified = sp.parseSmiles(smiles);
+				modified.addProperties(mol2.getProperties());
+				InChIGenerator gen2 = factory.getInChIGenerator(modified);
 				inchikey2 = gen2.getInchiKey();
 			}catch(CDKException e){
 				try {
@@ -459,8 +449,6 @@ public class ChemStructureExplorer {
 			throws CDKException {
 		IAtomContainerSet partitions = new AtomContainerSet();
 		IAtomContainerSet ms = ConnectivityChecker.partitionIntoMolecules(molecule);
-//		System.out.println("MS: " + ms.getAtomContainerCount() + " molecule(s).");
-	
 		for (int k = 0; k < ms.getAtomContainerCount(); k++) {
 			IAtomContainer current_metabolite = ms.getAtomContainer(k);
 			AtomContainerManipulator
@@ -646,8 +634,6 @@ public class ChemStructureExplorer {
 		SmartsPatternCDK smartsPatternValid = new SmartsPatternCDK(constraintsValid);
 		
 		String sp_phenols = "[#1,$([#8;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])])]-[#6;R1]=,:1[#6;R1](-[$(C(=O)[O;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])]),$(C([H])=C([H])C(=O)[O;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])]),$(C([H])([H])C(=O)[O;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])]),$(C([H])([H])C([H])([H])C(=O)[O;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])])])=,:[#6;R1](-[#1,$([#8;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])])])[#6;R1](-[#1,$([#8;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])])])=,:[#6;R1](-[#1,$([#8;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])])])[#6;R1]=,:1-[#1,$([#8;R0]-[#1,C,$(S(=O)(=O)[OX2H1,OX1-])])]";
-//		System.out.println("sp_phenols: " + ChemStructureExplorer.findAllOccurences(sp_phenols,molecule).size());
-//		System.out.println("constraintsValid: " + ChemStructureExplorer.findAllOccurences(constraintsValid,molecule).size());
 		
 		/**
 		 * (R1) Marín, L. et al. (2015); Bioavailability of Dietary Polyphenols and Gut Microbiota Metabolism: Antimicrobial Properties; Biomed Res Int. 2015; 2015: 905215.; doi:  10.1155/2015/905215
@@ -698,11 +684,6 @@ public class ChemStructureExplorer {
 		glycosylMoietyPattern.match(molecule);
 		oMethylPattern.match(molecule);
 		sulfatedRadicalPattern.match(molecule);
-		
-//		System.out.println((flavonoidPattern.hasSMARTSPattern(molecule)>0 || isoflavonoidPattern.hasSMARTSPattern(molecule)>0 || anthocyanidinPattern.hasSMARTSPattern(molecule)>0 || otherFlavonoidsPattern.hasSMARTSPattern(molecule)>0));
-//		System.out.println(glycosylMoietyPattern.getUniqueMatchingAtoms().size());
-//		System.out.println(glycosylMoietyPattern.getUniqueMatchingAtoms().size());
-//		System.err.println(smartsPatternValid.hasSMARTSPattern(molecule) > 0);
 		
 		
 		if( (flavonoidPattern.hasSMARTSPattern(molecule)>0 || isoflavonoidPattern.hasSMARTSPattern(molecule)>0 || anthocyanidinPattern.hasSMARTSPattern(molecule)>0 || otherFlavonoidsPattern.hasSMARTSPattern(molecule)>0)  
@@ -798,10 +779,8 @@ public class ChemStructureExplorer {
 		AtomContainerManipulator.percieveAtomTypesAndConfigureAtoms(molecule);
 		AtomContainerManipulator.convertImplicitToExplicitHydrogens(molecule);
 		
-		SmilesGenerator s =  new SmilesGenerator();
-		
-//		System.out.println("STRUCTURE TO VALIDATE: " + s.create(molecule));
-		
+		SmilesGenerator s =  new SmilesGenerator(SmiFlavor.Isomeric);
+			
 		boolean bad =  false;
 		
 		String constraints = "["
@@ -1134,15 +1113,10 @@ public class ChemStructureExplorer {
 		// 5-(3,4-dihydroxyphenyl)valeric acid must be dehydroxylated at the 4-position of the alkyl chain
 		SmartsPatternCDK _34_dhpva = new SmartsPatternCDK("[#8;A;H1X2]!@-[#6]1=,:[#6][#6]=,:[#6]([#6]=,:[#6]1!@-[#8;A;H1X2])[#6;A;H2X4][#6;A;H1X4]([#8;A;H1X2])[#6;A;H2X4][#6;A;H2X4][#6;X3]([#8;A;X1-,X2H1])=O");
 		
-//		System.out.println("IS POLYPHENOL: " + (flavonoidPattern.hasSMARTSPattern(molecule)>0 || isoflavonoidPattern.hasSMARTSPattern(molecule)>0 || anthocyanidinPattern.hasSMARTSPattern(molecule)>0 || otherFlavonoidsPattern.hasSMARTSPattern(molecule)>0));
-
 		glycosylMoietyPattern.match(molecule);
 		oMethylPattern.match(molecule);
 		sulfatedRadicalPattern.match(molecule);
-		
-//		System.err.println(smartsPattern.hasSMARTSPattern(molecule) > 0);
-//		System.err.println("SIZE: " + smartsPattern.match(molecule));
-//		System.err.println("SIZE: " + smartsPattern.getUniqueMatchingAtoms().size());
+
 
 		if (smartsPattern.hasSMARTSPattern(molecule) > 0 || 
 				linkedPolyGlucuronidatedPattern.hasSMARTSPattern(molecule) > 0 ||
@@ -1184,18 +1158,6 @@ public class ChemStructureExplorer {
 
 		
 		else if (isMetabolizablePolyphenolOrDerivative(molecule)){
-//			System.out.println("====> Is metabolizable polyphenol or phenolic derivative");
-//			System.out.println("glucuronidePattern.hasSMARTSPattern(molecule): " + glucuronidePattern.hasSMARTSPattern(molecule));
-//			System.out.println("sulfatedRadicalPattern.hasSMARTSPattern(molecule): " + sulfatedRadicalPattern.hasSMARTSPattern(molecule));
-//			System.out.println("glucuronidePattern.hasSMARTSPattern(molecule) + sulfatedRadicalPattern.hasSMARTSPattern(molecule): " + glucuronidePattern.hasSMARTSPattern(molecule) + sulfatedRadicalPattern.hasSMARTSPattern(molecule));
-//			System.out.println(sulfatedRadicalPattern.getUniqueMatchingAtoms(molecule));
-//			System.out.println(sulfatedRadicalPattern.getUniqueMatchingAtoms().size());
-//			System.out.println(sulfatedRadicalPattern.getUniqueMatchingAtoms());
-			// 2 or more linked glucuronide molecules
-			
-			
-			
-			
 			if(linkedPolyGlucuronidatedPattern.hasSMARTSPattern(molecule)>0){
 				bad = true;
 			}
@@ -1209,12 +1171,10 @@ public class ChemStructureExplorer {
 			}
 			else if ( glucuronidePattern.hasSMARTSPattern(molecule)>0 &&  sulfatedRadicalPattern.hasSMARTSPattern(molecule)>0 &&
 					( glucuronidePattern.getUniqueMatchingAtoms().size() + sulfatedRadicalPattern.getUniqueMatchingAtoms().size() > 2)){
-				// System.out.println("glucuronidePattern + sulfatedRadicalPattern");
 				bad = true;
 			}
 ////			else if (_2p_glucuronidatedCatechol.hasSMARTSPattern(molecule) > 0 || _2p_sulfatedCatechol.hasSMARTSPattern(molecule) > 0 || adjacentSulfateGlucuronideSubstitutionsOnCatechol.hasSMARTSPattern(molecule)>0){
 			else if (adjacentSulfateGlucuronideSubstitutionsOnCatechol.hasSMARTSPattern(molecule)>0){
-//				System.out.println("adjacentSulfateGlucuronideSubstitutionsOnCatechol");
 				bad = true;
 			}			
 //			// if it contains glutamate, n-acetyl, n-glutathione transferease()
@@ -1366,11 +1326,8 @@ public class ChemStructureExplorer {
 			inchikey = gen1.getInchiKey();
 			molecule.setProperty("InChIKey", inchikey);
 			molecule.setProperty("InChI", gen1.getInchi());
-//			System.out.println("IS BIOTRANSFORMER VALID INCHIKEY: " + inchikey);
 		}
  
-//		System.out.println(!( isPpsCofactor(inchikey) || isPpsDeadEndCompound(inchikey) || 
-//				isCompoundInorganic(molecule) || isStandardAminoAcid(molecule)));
 		return !(isMixture(molecule) || isPpsCofactor(inchikey) || isPpsDeadEndCompound(inchikey) || 
 				isCompoundInorganic(molecule) || isStandardAminoAcid(molecule)); 
 	}
@@ -1386,13 +1343,9 @@ public class ChemStructureExplorer {
 			inchikey = gen1.getInchiKey();
 			molecule.setProperty("InChIKey", inchikey);
 			molecule.setProperty("InChI", gen1.getInchi());
-//			System.out.println("IS BIOTRANSFORMER VALID INCHIKEY: " + inchikey);
 		}
-//		boolean a = isPpsCofactor(inchikey);
-//		boolean b = isPpsDeadEndCompound(inchikey);
-//		boolean c = isStandardAminoAcid(molecule);
-		return !(isPpsCofactor(inchikey) || isPpsDeadEndCompound(inchikey) || 
-				isStandardAminoAcid(molecule)); 
+		
+		return !(isPpsCofactor(inchikey) || isPpsDeadEndCompound(inchikey));// || isStandardAminoAcid(molecule)); 
 	}
 	
 	public static void addInChIandKey(IAtomContainer molecule) throws CDKException{
@@ -1410,7 +1363,25 @@ public class ChemStructureExplorer {
         IMolecularFormula formula = MolecularFormulaManipulator.getMolecularFormula(molecule);		
 		return MolecularFormulaManipulator.getMajorIsotopeMass(formula);
 	}
-
+	public static boolean isOrganic(IAtomContainer molecule) {
+		for(int i = 0; i < molecule.getAtomCount(); i++) {
+			if(molecule.getAtom(i).getSymbol().equalsIgnoreCase("C")) {
+				return true;
+			}
+		}
+		return false;
+	}
+	public static boolean isCSPNOBrXH(IAtomContainer molecule) {
+		for(int i = 0; i < molecule.getAtomCount(); i++) {
+			String type = molecule.getAtom(i).getSymbol();
+			if(!type.equalsIgnoreCase("C") && !type.equalsIgnoreCase("S") && !type.equalsIgnoreCase("N") && !type.equalsIgnoreCase("O") &&
+			   !type.equalsIgnoreCase("P") && !type.equalsIgnoreCase("H") && !type.equalsIgnoreCase("Cl") && !type.equalsIgnoreCase("F") && !type.equalsIgnoreCase("Br") &&
+			   !type.equalsIgnoreCase("I")) {
+				return false;
+			}
+		}
+		return true;
+	}
 	public static String getMolecularFormula(IAtomContainer molecule){	
         IMolecularFormula formula = MolecularFormulaManipulator.getMolecularFormula(molecule);		
 		return MolecularFormulaManipulator.getString(formula);
@@ -1427,7 +1398,10 @@ public class ChemStructureExplorer {
 		
 		xlogp = xLogpDescriptor.calculate(molecule).getValue();
 		ALOGPDescriptor aLogpDescriptor = new ALOGPDescriptor();
+		SmilesGenerator sg = new SmilesGenerator(SmiFlavor.Isomeric);
 		alogp = aLogpDescriptor.calculate(molecule).getValue();
+		
+
 
 		
 		// Calculate the weight of specified element type in the supplied
@@ -1436,23 +1410,9 @@ public class ChemStructureExplorer {
 		
 		// Get the summed major isotopic mass of all elements from an MolecularFormula.
 		majorIsotopeMass = getMajorIsotopeMass(molecule);
-		
-//		DescriptorValue pka = PKASmartsDescriptor
-		
-		IDescriptorResult hbaCount 	= hbaDCountDescriptor.calculate(molecule).getValue();
-		IDescriptorResult hbdCount 	= hbdCountDescriptor.calculate(molecule).getValue();
-		IDescriptorResult rbCount	= rbCountDescriptor.calculate(molecule).getValue();
-		
-		
-
 		properties.put("Major Isotope Mass" , majorIsotopeMass.toString());
 		properties.put("ALogP", alogp.toString().split(",")[0]);
 		properties.put("XLogP", xlogp.toString());		
-//		properties.put("hbaCount", hbaCount.toString());
-//		properties.put("hbdCount", hbdCount.toString());
-//		properties.put("rbCount", rbCount.toString());
-//		System.out.println("properties: " + properties);
-//		properties.put("Molecular weight" , weight.toString());
 		return properties;
 		
 		
@@ -1529,8 +1489,11 @@ public class ChemStructureExplorer {
 	/**
 	 * A dictionary with dead-end compounds. Remember that AMBIT does not return stereo-specific configurations
 	 */
-	private static LinkedHashMap<String, String[] > ppsDeadEndCompounds;
-
+	//Unfortunately, those "DeadEndCompounds" are not real end of their metabolic pathways and the users want to know the furtehr metabolites.
+	//Hence, I just disabled this checking list by making it a empty LinkedHashMap
+	private static LinkedHashMap<String, String[] > ppsDeadEndCompounds = new LinkedHashMap<String, String[]>();		
+	/*
+	private static LinkedHashMap<String, String[] > ppsDeadEndCompounds;		
 	static{
 		ppsDeadEndCompounds = new LinkedHashMap<String, String[]>();
 		ppsDeadEndCompounds.put("GTZCVFVGUGFEME-IWQZZHSRSA-M", new String[]{"cis-aconitate","OC(=O)\\C=C(\\CC([O-])=O)C(O)=O"});
@@ -1612,9 +1575,9 @@ public class ChemStructureExplorer {
 		ppsDeadEndCompounds.put("ISAKRJDGNUQOIC-UHFFFAOYSA-N", new String[]{"uracil","O=C1NC=CC(=O)N1"});
 		ppsDeadEndCompounds.put("XSQUKJJJFZCRTK-UHFFFAOYSA-N", new String[]{"urea","NC(N)=O"});
 		ppsDeadEndCompounds.put("LRFVTYWOQMYALW-UHFFFAOYSA-N", new String[]{"xanthine","O=C1NC2=C(NC=N2)C(=O)N1"});
-//		ppsDeadEndCompounds.put("", new String[]{"",""});
+//		ppsDeadEndCompounds.put("", new String[]{"",""});	 
 	}
-	
+	*/
 		
 	/**
 	 * A dictionary of amino acids. considered only the first part of the inchikeys
@@ -1842,11 +1805,46 @@ public class ChemStructureExplorer {
 		
 		return violations;
 	}
+	/**
+	 * This function is used to remove the redundant exception checking code into a single neat line
+	 * The default massThrehold value is 1500Da
+	 * @param singleInput
+	 * @return
+	 * @throws Exception
+	 */
+	public static boolean checkExceptions_queryInput(boolean printMode, IAtomContainer singleInput, Double massThrehold) throws Exception{
+		if (singleInput !=null){			
+			if(ChemStructureExplorer.getMajorIsotopeMass(singleInput) > massThrehold) {
+				if(printMode) {
+					System.out.println("The molcule is over 1500Da. BioTransformer is supposed to take molecules that are lighter than 1500Da as input");
+					return false;
+				}
+				else throw new IllegalArgumentException("The molcule is over 1500Da. BioTransformer is supposed to take molecules that are lighter than 1500Da as input");
+			}
+			if(!ChemStructureExplorer.isOrganic(singleInput)) {
+				if(printMode) {
+					System.out.println("The molcule is not organic. BioTransformer is supposed to make predictions for organic compounds");
+					return false;
+				}
+				else throw new IllegalArgumentException("The molcule is not organic. BioTransformer is supposed to make predictions for organic compounds");
+			}
+			if(ChemStructureExplorer.isMixture(singleInput)) {
+				if(printMode) {
+					System.out.println("The substrate must be: 1) organic, and; 2) not a mixture.");
+					return false;
+				}
+				else throw new IllegalArgumentException("The substrate must be: 1) organic, and; 2) not a mixture.");
+			}
+			if(!ChemStructureExplorer.isCSPNOBrXH(singleInput)) {
+				if(printMode) {
+					System.out.println("The substrate should only contain C, H, O, N, P, S, Cl, F, I, Br");
+					return false;
+				}
+				else throw new IllegalArgumentException("The substrate should only contain C, H, O, N, P, S, Cl, F, I, Br");
+			}
+		}
+		return true;
+	}
 	
 	
-//	public int agLikenessViolations(IAtomContainer molecule) {
-//		int aViolations = 0;
-//		
-//		return aViolations;
-//	}		
 }

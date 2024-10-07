@@ -10,13 +10,10 @@
 
 package biotransformer.btransformers;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
-import org.codehaus.jackson.JsonParseException;
-import org.codehaus.jackson.map.JsonMappingException;
 import org.openscience.cdk.CDKConstants;
 import org.openscience.cdk.DefaultChemObjectBuilder;
 import org.openscience.cdk.exception.CDKException;
@@ -26,21 +23,20 @@ import org.openscience.cdk.io.iterator.IteratingSDFReader;
 import ambit2.smarts.query.SMARTSException;
 import biotransformer.biomolecule.Enzyme;
 import biotransformer.biosystems.BioSystem.BioSystemName;
-import biotransformer.btransformers.Biotransformer;
+import biotransformer.dbrelevant.RetriveFromDB;
 import biotransformer.transformation.Biotransformation;
 import biotransformer.transformation.MetabolicReaction;
 import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.ChemStructureManipulator;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.Utilities;
-import exception.BioTransformerException;
 
 public class HGutBTransformer extends Biotransformer {
 
-	public HGutBTransformer() throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException{
-		super(BioSystemName.GUTMICRO);
+	public HGutBTransformer(boolean useDB, boolean useSubstitution) throws Exception{
+		super(BioSystemName.GUTMICRO, useDB, useSubstitution);
 		setReactionsList();
+		this.rfdb = new RetriveFromDB("hmdb", "microbial", false, 30, useSubstitution); 
 	}
 	
 	/**
@@ -80,7 +76,7 @@ public class HGutBTransformer extends Biotransformer {
 					enz.getName().contentEquals("EC_3_1_1_73") ||
 					
 					// hydrolase
-					enz.getName().contentEquals("EC_3_5_1_24")
+					enz.getName().contentEquals("EC_3_5_1_24") || enz.getName().contentEquals("EC_3_4_13_18")
 					
 					){
 				deconjugationReact.addAll(enz.getReactionSet());
@@ -93,7 +89,21 @@ public class HGutBTransformer extends Biotransformer {
 				redoxEnz.add(enz);				
 			}
 		}
-				
+		/**
+		 * This section is added by Siyang. We want the enzymeList be set up here as well		
+		 */
+		for(int i = 0; i < redoxEnz.size(); i++){
+			if(!this.enzymesList.contains(redoxEnz.get(i))) this.enzymesList.add(redoxEnz.get(i));
+		}
+		for(int i = 0; i < deconjugationEnz.size(); i++){
+			if(!this.enzymesList.contains(deconjugationEnz.get(i))) this.enzymesList.add(deconjugationEnz.get(i));
+		}
+		for(int i = 0; i < phaseIIEnz.size(); i++){
+			if(!this.enzymesList.contains(phaseIIEnz.get(i))) this.enzymesList.add(phaseIIEnz.get(i));
+		}
+		/**
+		 * End of the section
+		 */
 		this.reactionsByGroups.put("gutMicroReductiveReactions", redoxReact);
 		this.reactionsByGroups.put("gutMicroPhaseIIReactions", phaseIIReact);
 		this.reactionsByGroups.put("deconjugationReactions", deconjugationReact );
@@ -448,14 +458,15 @@ public class HGutBTransformer extends Biotransformer {
 	
 	}
 		
-	public ArrayList<Biotransformation> applyGutMicrobialMetabolismHydrolysisAndRedoxStep(IAtomContainer target,
-			boolean preprocess, boolean filter, Double scoreThreshold) throws Exception{
-		
+	public ArrayList<Biotransformation> applyGutMicrobialMetabolismHydrolysisAndRedoxStep(IAtomContainer target, boolean preprocess, boolean filter, Double scoreThreshold) throws Exception{		
 		try {
 			if(ChemStructureExplorer.isCompoundInorganic(target) || ChemStructureExplorer.isMixture(target)){
 				throw new IllegalArgumentException(target.getProperty("InChIKey")+ "\nThe substrate must be: 1) organic, and; 2) not a mixture.");
 			} 
 			else if(ChemStructureExplorer.isBioTransformerValid(target)){
+				ArrayList<Biotransformation> depolymerization_bts = this.processPolymer_oneMole(target);
+				if(depolymerization_bts!=null && !depolymerization_bts.isEmpty()) return depolymerization_bts;
+				
 				ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 				IAtomContainer st = ChemStructureManipulator.standardizeMoleculeWithCopy(target, true);
 				
@@ -480,13 +491,11 @@ public class HGutBTransformer extends Biotransformer {
 		}
 	}
 		
-	public ArrayList<Biotransformation> applyGutMicrobialMetabolismHydrolysisAndRedoxStep(IAtomContainerSet targets, boolean preprocess, 
-			boolean filter, Double scoreThreshold) throws Exception{
+	public ArrayList<Biotransformation> applyGutMicrobialMetabolismHydrolysisAndRedoxStep(IAtomContainerSet targets, boolean preprocess, boolean filter, Double scoreThreshold) throws Exception{
 		
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 		for(IAtomContainer atc : targets.atomContainers()){
-			ArrayList<Biotransformation> bts = this.applyGutMicrobialMetabolismHydrolysisAndRedoxStep(atc, preprocess, 
-					filter, scoreThreshold);
+			ArrayList<Biotransformation> bts = this.applyGutMicrobialMetabolismHydrolysisAndRedoxStep(atc, preprocess, filter, scoreThreshold);
 			if(bts != null && bts.size()>0){
 				biotransformations.addAll(bts);
 			}
@@ -530,7 +539,9 @@ public class HGutBTransformer extends Biotransformer {
 
 	public ArrayList<Biotransformation> simulateGutMicrobialMetabolism(IAtomContainer target, boolean preprocess, 
 			boolean filter, int numberOfSteps, Double scoreThreshold) throws Exception{
-
+		if(this.useDB && this.rfdb.fcc.retriveFromDB(target)) {
+			return this.getBiotransoformationsByExploringHDMB(target);
+		}
 		IAtomContainerSet targets = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 		targets.addAtomContainer(target);					
 		return simulateGutMicrobialMetabolism(targets, preprocess, filter, numberOfSteps, scoreThreshold);
@@ -540,37 +551,98 @@ public class HGutBTransformer extends Biotransformer {
 			boolean filter, int numberOfSteps) throws Exception{
 		 return simulateGutMicrobialMetabolism(targets, preprocess, filter, numberOfSteps, 0.0);
 	}
-	
-	public ArrayList<Biotransformation> simulateGutMicrobialMetabolism(IAtomContainerSet targets, boolean preprocess, 
-			boolean filter, int numberOfSteps, Double scoreThreshold) throws Exception{
+	/**
+	 * This function will generate Gut Microbial metabolism metabolites
+	 * @param targets
+	 * @param preprocess
+	 * @param filter
+	 * @param numberOfSteps
+	 * @param scoreThreshold
+	 * @return
+	 * @throws Exception
+	 */
+	public ArrayList<Biotransformation> simulateGutMicrobialMetabolism(IAtomContainerSet targets, boolean preprocess, boolean filter, int numberOfSteps, Double scoreThreshold) throws Exception{
 
 		/**
 		 In cases of multi-step transformations, instead of conjugating molecules and deconjugating them over 
 		 and over again, it is better to just apply one conjugation step just at the end.
 		 */
+		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();		
+		IAtomContainerSet phaseIIsubs = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);	
+		for(int i = 0; i < targets.getAtomContainerCount(); i++) {
+			if(!this.hp.isPolymer(targets.getAtomContainer(i))) phaseIIsubs.add(targets);
+		}
+		IAtomContainerSet containers = targets;
+		ArrayList<String> substrateProcessed = new ArrayList<>();	
+		containers = Utilities.getNovelSubstrates(containers, substrateProcessed);
+		int num_iteration_record = numberOfSteps;
+		while (numberOfSteps > 0){
+			ArrayList<Biotransformation> currentBiotransformations = new ArrayList<>();
+			for(int i = 0; i < containers.getAtomContainerCount(); i++) {
+				IAtomContainer oneMole = containers.getAtomContainer(i);
+				if(this.useDB && this.rfdb.fcc.retriveFromDB(oneMole)) {
+					ArrayList<Biotransformation> db_results = this.rfdb.getBiotransformationRetrievedFromDB(oneMole, true);
+					if(db_results!=null && !db_results.isEmpty()) {
+						currentBiotransformations.addAll(db_results);
+						containers.removeAtomContainer(i);
+						i = i - 1;
+					}
+				}
+			}
+			/**
+			 The function that extracts atom containers from botransformations automatically pre-processes them. 
+			 So, we set preprocess=false in the function below.
+			 !!! TO DO: Setting this to false does not return anything. Check why
+			 */
+			ArrayList<Biotransformation> currentBiotransformations_fromBT = this.applyGutMicrobialMetabolismHydrolysisAndRedoxStep(containers, preprocess, filter, scoreThreshold);
+			currentBiotransformations.addAll(currentBiotransformations_fromBT);
+			numberOfSteps--;
+			if(!this.inAllHuman) System.out.println("HGut num of iterations done: " + (num_iteration_record - numberOfSteps));
+			if(!currentBiotransformations.isEmpty()){
+				biotransformations.addAll(currentBiotransformations);
+				containers.removeAllAtomContainers();
+				containers = extractProductsFromBiotransformations(currentBiotransformations);	
+				containers = Utilities.getNovelSubstrates(containers, substrateProcessed);
+				substrateProcessed = Utilities.updateProcessedSubstratePool(substrateProcessed, containers);
+				if(numberOfSteps > 1) {
+					phaseIIsubs.add(containers);
+				}
+			}
+			else{
+				break;
+			}
+		}
+		
+		for(IAtomContainer atCon : phaseIIsubs.atomContainers()) {
+			ArrayList<Biotransformation> phaseIIBiotransformations = applyGutMicrobialConjugations(atCon,preprocess, filter, scoreThreshold);
+			if(phaseIIBiotransformations != null && phaseIIBiotransformations.size()>0) {
+				biotransformations.addAll(phaseIIBiotransformations);
+			}
+			
+		}	
+		return Utilities.selectUniqueBiotransformations(biotransformations);
+	}
+	
 
+	public ArrayList<Biotransformation> simulateGutMicrobialMetabolism_withDepolymerization(IAtomContainerSet targets, boolean preprocess, boolean filter, int numberOfSteps, Double scoreThreshold) throws Exception{
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();
 		int i = 0;
 		
 		IAtomContainerSet phaseIIsubs = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 		IAtomContainerSet currentProducts = DefaultChemObjectBuilder.getInstance().newInstance(IAtomContainerSet.class);
 		
-//		if(preprocess) {
-//			for(IAtomContainer a : targets.atomContainers()) {
-//				IAtomContainer starget = ChemStructureManipulator.preprocessContainer(a);
-//				AtomContainerManipulator.convertImplicitToExplicitHydrogens(starget);
-//				products.addAtomContainer(starget);
-//			}
-//		}
-//		else {
 		phaseIIsubs.add(targets);
-//		}
-//		
-//		currentProducts.add(products);
 		currentProducts.add(targets);
+		IAtomContainerSet containers = targets;
+		ArrayList<Biotransformation> result_temp = this.processPolymer(containers);
+		if(result_temp!=null && !result_temp.isEmpty()){
+			numberOfSteps = numberOfSteps - 1;
+			biotransformations.addAll(result_temp);
+			containers = extractProductsFromBiotransformations(result_temp);	
+		}
+		
 		
 		while (i < numberOfSteps){
-//			System.err.println("Step nr " + (i+1));
 			/**
 			 The function that extracts atom containers from botransformations automatically pre-processes them. 
 			 So, we set preprocess=false in the function below.
@@ -581,16 +653,12 @@ public class HGutBTransformer extends Biotransformer {
 			if(i < numberOfSteps -1) {
 				phaseIIsubs.add(currentProducts);
 			}
-			
-//			System.out.println("\tNumber of products at this step: " + currentProducts.getAtomContainerCount());
-//			System.out.println("\tTotal number of compounds: " + products.getAtomContainerCount());
 			i++;
 		}
 		
 
 		for(IAtomContainer atCon : phaseIIsubs.atomContainers()) {
-			ArrayList<Biotransformation> phaseIIBiotransformations = applyGutMicrobialConjugations(atCon,
-					preprocess, filter, scoreThreshold);
+			ArrayList<Biotransformation> phaseIIBiotransformations = applyGutMicrobialConjugations(atCon,preprocess, filter, scoreThreshold);
 			if(phaseIIBiotransformations != null && phaseIIBiotransformations.size()>0) {
 				biotransformations.addAll(phaseIIBiotransformations);
 			}
@@ -599,10 +667,7 @@ public class HGutBTransformer extends Biotransformer {
 		return Utilities.selectUniqueBiotransformations(biotransformations);
 	}
 	
-
-	
-	public ArrayList<Biotransformation> simulateGutMicrobialMetabolism(String targetsFileNameInSDF, boolean preprocess, 
-			boolean filter, int nr_of_steps, Double scoreThreshold) throws Exception{
+	public ArrayList<Biotransformation> simulateGutMicrobialMetabolism(String targetsFileNameInSDF, boolean preprocess, boolean filter, int nr_of_steps, Double scoreThreshold) throws Exception{
 		
 		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();			
 		IteratingSDFReader sdfr = new IteratingSDFReader(new FileReader(targetsFileNameInSDF), this.builder);
@@ -610,8 +675,7 @@ public class HGutBTransformer extends Biotransformer {
 		while (sdfr.hasNext()){
 			IAtomContainer mol = sdfr.next();
 			try {
-				ArrayList<Biotransformation> bts = this.simulateGutMicrobialMetabolism(mol, preprocess, 
-						filter, nr_of_steps, scoreThreshold);
+				ArrayList<Biotransformation> bts = this.simulateGutMicrobialMetabolism(mol, preprocess, filter, nr_of_steps, scoreThreshold);
 				if(bts!= null && bts.size()>0){
 					biotransformations.addAll(bts);	
 				}

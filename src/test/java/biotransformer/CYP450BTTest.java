@@ -22,7 +22,7 @@ public class CYP450BTTest {
 	static Cyp450BTransformer hCyp450;
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		hCyp450 = new Cyp450BTransformer(BioSystemName.HUMAN);
+		hCyp450 = new Cyp450BTransformer(BioSystemName.HUMAN, false, false);
 	}
 
 	@AfterClass

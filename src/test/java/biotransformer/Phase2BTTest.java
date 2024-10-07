@@ -22,7 +22,7 @@ public class Phase2BTTest {
 
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		p2bt = new Phase2BTransformer(BioSystemName.HUMAN);
+		p2bt = new Phase2BTransformer(BioSystemName.HUMAN, false, false);
 	}
 
 	@AfterClass

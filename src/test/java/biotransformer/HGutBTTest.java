@@ -21,7 +21,7 @@ public class HGutBTTest {
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		hgbt = new HGutBTransformer();
+		hgbt = new HGutBTransformer(false, false);
 	}
 
 	@AfterClass

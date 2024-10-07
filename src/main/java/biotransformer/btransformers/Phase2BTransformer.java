@@ -8,14 +8,12 @@
 
 package biotransformer.btransformers;
 
-import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.io.IOException;
 import java.util.ArrayList;
 import java.util.LinkedHashMap;
 
 import org.codehaus.jackson.JsonGenerationException;
-import org.codehaus.jackson.JsonParseException;
 import org.codehaus.jackson.map.JsonMappingException;
 import org.openscience.cdk.AtomContainerSet;
 import org.openscience.cdk.DefaultChemObjectBuilder;
@@ -30,6 +28,7 @@ import org.openscience.cdk.tools.manipulator.AtomContainerManipulator;
 import ambit2.smarts.query.SMARTSException;
 import biotransformer.biomolecule.Enzyme;
 import biotransformer.biosystems.BioSystem.BioSystemName;
+import biotransformer.dbrelevant.RetriveFromDB;
 import biotransformer.esaprediction.ESSpecificityPredictor;
 import biotransformer.transformation.Biotransformation;
 import biotransformer.transformation.MetabolicReaction;
@@ -37,7 +36,6 @@ import biotransformer.utils.ChemStructureExplorer;
 import biotransformer.utils.ChemStructureManipulator;
 import biotransformer.utils.ChemicalClassFinder;
 import biotransformer.utils.Utilities;
-import exception.BioTransformerException;
 import phase2filter.prediction.P2Filter;;
 
 /**
@@ -54,18 +52,17 @@ public class Phase2BTransformer extends Biotransformer{
 	 */
 	P2Filter p2Filter = null;
 	
-	public Phase2BTransformer(BioSystemName bioSName) throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException {
-		super(bioSName);
+	public Phase2BTransformer(BioSystemName bioSName, boolean useDB, boolean useSubstitution) throws Exception {
+		super(bioSName, useDB, useSubstitution);
 		setPhase2EnzymesAndReactionList();
 		if(this.getBioSystemName() == BioSystemName.HUMAN){
 //			this.p2Filter = new P2Filter();
 			this.p2Filter = new P2Filter((LinkedHashMap<String, Object>) this.bSystem.mlmodels.get("P2Filter"));
-//			System.out.println("this.p2Filter : " + this.p2Filter.properties);
+		}
+		if(useDB) {
+			this.rfdb = new RetriveFromDB("hmdb", "phaseII", false, 30, useSubstitution);
 		}
 		
-//		printStatistics();
-		// TODO Auto-generated constructor stub
 	}
 	
 	/**
@@ -156,27 +153,7 @@ public class Phase2BTransformer extends Biotransformer{
 				}
 
 			}
-////			System.out.println("standardizationReactions : " + mapper.writerWithDefaultPrettyPrinter().writeValueAsString(
-////					this.reactionsByGroups.get("standardizationReactions")));
-//			System.out.println("Glucuronidation : " + 
-//					this.reactionsByGroups.get("Glucuronidation"));
-//
-//			System.out.println("\n--------------------------------------\nSulfonation : " + 
-//					this.reactionsByGroups.get("Sulfonation"));
-//
-//			System.out.println("\n--------------------------------------\nMethylation : " + 
-//					this.reactionsByGroups.get("Methylation"));
-//
-//			System.out.println("\n--------------------------------------\nAcetylation : " + 
-//					this.reactionsByGroups.get("Acetylation"));
-//
-//			System.out.println("\n--------------------------------------\nGlutathione Transfer : " + 
-//					this.reactionsByGroups.get("Glutathione Transfer"));
-//
-//			System.out.println("\n--------------------------------------\nGlycine Transfer : " + 
-//					this.reactionsByGroups.get("Glycine Transfer"));
-//			
-			
+		
 		}else if (this.bSystem.name == BioSystemName.GUTMICRO){
 			for(Enzyme enz : this.bSystem.getEnzymesList()){
 				if(enz.getName().contains("UDP_GLUCURONOSYLTRANSFERASE")){				
@@ -353,43 +330,38 @@ public class Phase2BTransformer extends Biotransformer{
 				preprocess, precheck, filter, nr_of_steps, scoreThreshold);
 	}
 
-	public ArrayList<Biotransformation> applyPhase2TransformationsChainAndReturnBiotransformations(IAtomContainerSet targets,
-			boolean precheck, boolean preprocess, boolean filter, int nr_of_steps, Double scoreThreshold) throws Exception{
-		
-		ArrayList<Biotransformation> products = new ArrayList<Biotransformation>();	
-		
-		
-//		AtomContainerSet containers = (AtomContainerSet) targets;
-		IAtomContainerSet containers = targets;
-		int counter = 0;
-		
+	public ArrayList<Biotransformation> applyPhase2TransformationsChainAndReturnBiotransformations(IAtomContainerSet targets, boolean precheck, boolean preprocess, boolean filter, int nr_of_steps, Double scoreThreshold) throws Exception{		
+		ArrayList<Biotransformation> biotransformations = new ArrayList<Biotransformation>();	
+		IAtomContainerSet containers = targets;		
 		while(nr_of_steps>0){
-			counter++;			
-			ArrayList<Biotransformation> currentProducts = applyPhase2Transformations(containers, precheck, preprocess, filter, scoreThreshold);
-			nr_of_steps--;
-//			System.err.println(currentProducts.size() + " biotransformations at step " + counter);
-			if(!currentProducts.isEmpty()){
-				products.addAll(currentProducts);
-				containers.removeAllAtomContainers();
-				containers = extractProductsFromBiotransformations(currentProducts);
-				for(IAtomContainer a : containers.atomContainers()){
-					
-//					if(ChemStructureExplorer.isCompoundInorganic(a)) {
-//						
-//					}else {
-						ChemStructureManipulator.standardizeMoleculeWithCopy(a);
-//					}
-//					 AtomContainerManipulator.convertImplicitToExplicitHydrogens(a);				
+			ArrayList<Biotransformation> currentBiotransformations = new ArrayList<Biotransformation>();
+			for(int i = 0; i < containers.getAtomContainerCount(); i++) {
+				IAtomContainer oneMole = containers.getAtomContainer(i);
+				if(this.useDB && this.rfdb.fcc.retriveFromDB(oneMole)) {
+					ArrayList<Biotransformation> db_results = this.rfdb.getBiotransformationRetrievedFromDB(oneMole, true);
+					if(db_results!=null && !db_results.isEmpty()) {
+						currentBiotransformations.addAll(db_results);
+						containers.removeAtomContainer(i);
+						i = i - 1;
+					}
 				}
-//				System.err.println("Number of compounds for upcoming setp " + (counter + 1) + ": " + containers.getAtomContainerCount());
+			}
+			ArrayList<Biotransformation> currentBiotransformations_fromBT = applyPhase2Transformations(containers, precheck, preprocess, filter, scoreThreshold);
+			currentBiotransformations.addAll(currentBiotransformations_fromBT);
+			nr_of_steps--;
+			if(!currentBiotransformations.isEmpty()){
+				biotransformations.addAll(currentBiotransformations);
+				containers.removeAllAtomContainers();
+				containers = extractProductsFromBiotransformations(currentBiotransformations);
+				for(IAtomContainer a : containers.atomContainers()){
+					ChemStructureManipulator.standardizeMoleculeWithCopy(a);				
+				}
 			}
 			else{
 				break;
 			}
 		}
-//		System.out.println("Stopped after " + counter + " steps.");
-//		System.out.println("Number of phase 2 metabolites: " + products.size());
-		return products;
+		return biotransformations;
 	}
 
 	public ArrayList<Biotransformation> applyReactionAndReturnBiotransformations(IAtomContainer target,
@@ -590,16 +562,6 @@ public class Phase2BTransformer extends Biotransformer{
 			sdfr.close();
 		}
 	
-	
-	
-	public boolean isPotentialHumanPhase2SubstrateByReactionPatternMatching(IAtomContainer substrate) throws Exception{
-		boolean phaseII = false;
-		
-		
-//		return (ChemStructureExplorer.getMajorIsotopeMass(substrate) < 900.0 && p2Filter.filter(substrate).get(0) == "T");
-		return p2Filter.filter(substrate).get(0) == "T";
-
-	}
 
 	
 	public boolean isPotentialNonHumanPhase2SubstrateByReactionPatternMatching(IAtomContainer substrate) throws Exception{
@@ -636,12 +598,17 @@ public class Phase2BTransformer extends Biotransformer{
 	// FIX THIS - ADD FUNCTIONS IN ESSpecificityPredictor THAT TAKES ENZYMES AS ARGUMENTS, TO AVOIR RECREATING ENZYMES VIA ENZYME NAMES.
 	public boolean isPotentialPhase2SubstrateByReactionPatternMatching(IAtomContainer substrate) throws Exception{
 		boolean phaseII = false;
-		
+//		try {
+//			substrate = Utilities.create3DCoordinates(substrate);
+//		}catch(Exception e) {
+//			return true;
+//		}
 		if(this.getBioSystemName() == BioSystemName.HUMAN){
-			phaseII = p2Filter.filter(
-					substrate 
-					).get(0) == "T";
-			
+			try {
+			phaseII = p2Filter.filter(substrate ).get(0) == "T";
+			}catch (Exception e) {
+				return true;
+			}
 		}
 		else{
 			
@@ -671,27 +638,7 @@ public class Phase2BTransformer extends Biotransformer{
 
 		return phaseII;
 	}
-	
 
-	public IAtomContainerSet reduceSet(IAtomContainerSet molecules) throws CDKException, Exception{
-
-		IAtomContainerSet filteredMolecules =  DefaultChemObjectBuilder.getInstance().newInstance(
-				IAtomContainerSet.class);
-		if(this.getBioSystemName() == BioSystemName.HUMAN){
-			filteredMolecules = this.p2Filter.returnFilteredPhaseIICandidates(molecules);
-		}
-		else{
-			
-			for(int i = 0; i < molecules.getAtomContainerCount(); i++){
-				if(this.isPotentialNonHumanPhase2SubstrateByReactionPatternMatching(molecules.getAtomContainer(i))){
-					filteredMolecules.addAtomContainer(molecules.getAtomContainer(i));
-				}				
-			}
-
-		}
-		
-		return filteredMolecules;
-	}
 	
 	public ArrayList<Biotransformation> selectBiotransformationWithValidProducts(ArrayList<Biotransformation> biotransformations) throws SMARTSException, CDKException, CloneNotSupportedException{
 		

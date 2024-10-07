@@ -36,6 +36,11 @@
   		<artifactId>cdk-bundle</artifactId>
   		<version>2.10-SNAPSHOT</version>
   	</dependency>
+    <dependency>
+        <groupId>org.apache.bcel</groupId>
+        <artifactId>bcel</artifactId>
+        <version>6.10.0</version>
+    </dependency>
   <!--
   	<dependency>
   		<groupId>ambit</groupId>

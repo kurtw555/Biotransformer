@@ -23,7 +23,7 @@ public class ECBasedBTTest {
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		ecbt = new ECBasedBTransformer(BioSystemName.HUMAN);
+		ecbt = new ECBasedBTransformer(BioSystemName.HUMAN, false, false);
 	}
 
 	@AfterClass

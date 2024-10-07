@@ -128,10 +128,8 @@ public class ChemStructureSimilarity {
 	}
 	
 	public static void generateCsv(HashMap<String, Double> tanimotoList, String outputname){
-//		System.out.println("In generator");
 		try
 		{
-//			System.out.println("Making File");
 		    FileWriter writer = new FileWriter(outputname);
 		    
 		    Iterator it = tanimotoList.entrySet().iterator();

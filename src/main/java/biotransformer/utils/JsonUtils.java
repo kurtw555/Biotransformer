@@ -51,7 +51,7 @@ public class JsonUtils {
 		mapper.configure(Feature.ALLOW_COMMENTS, true);
 		mapper.configure(Feature.ALLOW_BACKSLASH_ESCAPING_ANY_CHARACTER, true);
 		
-		System.out.println(ingestJson("database/enzymes.json", mapper));
+		System.out.println(ingestJson("btkb/enzymes.json", mapper));
 	}
 
 

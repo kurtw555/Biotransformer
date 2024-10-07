@@ -36,14 +36,9 @@ public class ChemdbRest {
 		
 		try{
 			Unirest.setTimeouts(4000, 4000);
-			String path = pubChemCompoundURL + "inchikey/" + inchikey +"/synonyms/json";
-//			System.out.println(path);
-			
+			String path = pubChemCompoundURL + "inchikey/" + inchikey +"/synonyms/json";			
 			HttpResponse<JsonNode> jsonResponse = Unirest.post(path).header("accept", "application/json").asJson();
-			JSONObject jObject = jsonResponse.getBody().getObject();
-//			System.out.println("KEYS");
-//			System.out.println(jObject.keySet().contains("InformationList"));
-			
+			JSONObject jObject = jsonResponse.getBody().getObject();			
 			if(jObject.keySet().contains("InformationList")){
 				JSONObject informationList = new JSONObject(jObject.get("InformationList").toString());
 				JSONObject information = new JSONObject(informationList.getJSONArray("Information").get(0).toString());

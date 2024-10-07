@@ -27,10 +27,6 @@ public class Version {
 		Document doc = db.parse(pomfile);  
 		doc.getDocumentElement().normalize();	
 		NodeList nodeList = doc.getElementsByTagName("version");
-//		System.out.println("Version : " + nodeList.item(0).getTextContent());
-//		System.out.println(doc.getElementsByTagName("artifactId").item(0).getTextContent());
-//		System.out.println(doc.getElementsByTagName("repositories").item(0).getTextContent());
-//	
 		return nodeList.item(0).getTextContent();
 	}
 	

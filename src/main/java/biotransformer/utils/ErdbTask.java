@@ -837,7 +837,7 @@ public class ErdbTask {
 //		 e.generateBioTransformerDB();
 		
 		 String[] cyps = {"1A2", "2A6", "2B6", "2C8", "2C9", "2C19", "2D6", "2E1", "3A4"};
-		 IAtomContainerSet containers = FileUtilities.parseSdf("/Users/yandj/Projects/Metabolism/data_set/CYP_DBs/merged.sdf");
+		 IAtomContainerSet containers = FileUtilities.parseSdf_or_CSV("/Users/yandj/Projects/Metabolism/data_set/CYP_DBs/merged.sdf");
 		 InChIGeneratorFactory inchiGenFactory = InChIGeneratorFactory.getInstance();
 //		 SDFWriter sdfWriter = new SDFWriter(new FileOutputStream(FilenameUtils.getFullPathNoEndSeparator(sdfFileName) + 
 //					"/" + FilenameUtils.getBaseName(sdfFileName)  + "_part_"+ part_nr + ".sdf" ));

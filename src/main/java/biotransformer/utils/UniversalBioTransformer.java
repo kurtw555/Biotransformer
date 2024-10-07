@@ -11,6 +11,7 @@ import org.codehaus.jackson.map.JsonMappingException;
 import org.openscience.cdk.exception.CDKException;
 import org.openscience.cdk.interfaces.IAtomContainer;
 import org.openscience.cdk.interfaces.IAtomContainerSet;
+import org.openscience.cdk.smiles.SmiFlavor;
 import org.openscience.cdk.smiles.SmilesGenerator;
 import org.openscience.cdk.smiles.SmilesParser;
 
@@ -22,10 +23,11 @@ import biotransformer.btransformers.HGutBTransformer;
 import biotransformer.btransformers.Phase2BTransformer;
 import biotransformer.transformation.Biotransformation;
 import biotransformer.transformation.MetabolicReaction;
-import exception.BioTransformerException;
 import phase2filter.prediction.P2Filter;
 
 public class UniversalBioTransformer {
+	boolean useDB;
+	boolean useSubstitution;
 	protected ECBasedBTransformer ecb;
 	protected Cyp450BTransformer cyb;
 	protected HGutBTransformer hgb;
@@ -39,16 +41,15 @@ public class UniversalBioTransformer {
 													= new LinkedHashMap<String, MetabolicReaction>();
 	
 	public SmilesParser smiParser;
-	public SmilesGenerator smiGen 		= new SmilesGenerator().isomeric();
+	public SmilesGenerator smiGen 		= new SmilesGenerator(SmiFlavor.Isomeric);
 	
 	
-	public UniversalBioTransformer() throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException {
-
-		ecb			= new ECBasedBTransformer(BioSystemName.HUMAN);
-		cyb 		= new Cyp450BTransformer(BioSystemName.HUMAN);
-		hgb 		= new HGutBTransformer();
-		p2b 		= new Phase2BTransformer(BioSystemName.HUMAN);
+	public UniversalBioTransformer(boolean useDB, boolean useSubstitution) throws Exception {
+		this.useSubstitution = useSubstitution;
+		ecb			= new ECBasedBTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		cyb 		= new Cyp450BTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
+		hgb 		= new HGutBTransformer(useDB, useSubstitution);
+		p2b 		= new Phase2BTransformer(BioSystemName.HUMAN, useDB, useSubstitution);
 		emb 		= new EnvMicroBTransformer();
 		smiParser	= ecb.getSmiParser();
 		

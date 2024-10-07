@@ -23,7 +23,7 @@ public class MetaboliteFinderTest {
 	
 	@BeforeClass
 	public static void setUpBeforeClass() throws Exception {
-		mft = new MetaboliteFinder();
+		mft = new MetaboliteFinder(false, false);
 	}
 
 	@AfterClass

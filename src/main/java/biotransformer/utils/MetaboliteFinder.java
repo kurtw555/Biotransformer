@@ -39,20 +39,21 @@ import exception.BioTransformerException;
 //
 
 public class MetaboliteFinder{
-	
+	boolean useDB; 
 	public HumanSuperBioTransformer hsbt;
 	public EnvMicroBTransformer ebt;
 	public UniversalBioTransformer ubt;
 	public InChIGeneratorFactory inchiGenFactory = InChIGeneratorFactory.getInstance();
 	protected IChemObjectBuilder 	builder = SilentChemObjectBuilder.getInstance();
+	boolean useSubstitution;
 	
-	
-	public MetaboliteFinder() throws JsonParseException, JsonMappingException, 
-	FileNotFoundException, IOException, BioTransformerException, CDKException{
+	public MetaboliteFinder(boolean useDB, boolean useSubstitution) throws Exception{
+		this.useDB = useDB;
+		this.useSubstitution = useSubstitution;
 		// TODO Auto-generated constructor stub
-		hsbt 		= new HumanSuperBioTransformer();
+		hsbt 		= new HumanSuperBioTransformer(useDB, useSubstitution);
 		ebt 		= new EnvMicroBTransformer();
-		ubt 		= new UniversalBioTransformer();
+		ubt 		= new UniversalBioTransformer(useDB, this.useSubstitution);
 	
 	}
 	
@@ -807,7 +808,7 @@ public class MetaboliteFinder{
 					ArrayList<BiotransformerSequenceStep> currentsteps = new ArrayList<BiotransformerSequenceStep>();
 					currentsteps.add(new BiotransformerSequenceStep(btStep.btype, 1, bseq.scoreThreshold));
 					
-					BiotransformerSequence currentSeq = new BiotransformerSequence(currentsteps , bseq.scoreThreshold);				
+					BiotransformerSequence currentSeq = new BiotransformerSequence(currentsteps, this.useDB, bseq.scoreThreshold, this.useSubstitution);				
 //					System.out.println("Current number of compounds: " + currentCompounds.getAtomContainerCount());
 					ArrayList<Biotransformation> currentBioT = currentSeq.runSequence(currentCompounds, bseq.scoreThreshold, cyp450Mode);				
 					System.out.println("Current biotransformations: " + currentBioT.size());

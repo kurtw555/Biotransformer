@@ -31,8 +31,8 @@ public class BioTransformerTest {
 
 
 	public static void main(String[] args) throws Exception {		
-		Biotransformer humanBT = new Biotransformer(BioSystemName.HUMAN);
-		Biotransformer bt = new Biotransformer(BioSystemName.GUTMICRO);
+		Biotransformer humanBT = new Biotransformer(BioSystemName.HUMAN, false, false);
+		Biotransformer bt = new Biotransformer(BioSystemName.GUTMICRO, false, false);
 
 //		ArrayList<MetabolicReaction> customArray = new ArrayList<MetabolicReaction>(bt.bSystem.getReactionsHash().values()) ;
 //		System.out.println("customArray: " + customArray.size());

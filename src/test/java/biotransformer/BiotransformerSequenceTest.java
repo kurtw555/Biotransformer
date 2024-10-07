@@ -42,7 +42,7 @@ public class BiotransformerSequenceTest {
 
 	@Test
 	public void test() throws Exception {
-		BiotransformerSequence btseq = new BiotransformerSequence("cyp450:1 ; ecbased:1");
+		BiotransformerSequence btseq = new BiotransformerSequence("cyp450:1 ; ecbased:1", false, false);
 		IAtomContainer molecule 	= smiParser.parseSmiles("CC12CCC(CC1CCC3C2CCC4(C3CCC4=O)C)O");
 //		BiotransformerSequence btseq = new BiotransformerSequence("ecbased:1 ; phaseII:1");
 //		IAtomContainer molecule 	= smiParser.parseSmiles("CCCC(=O)OC");
